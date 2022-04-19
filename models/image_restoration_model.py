@@ -32,7 +32,7 @@ class Mixing_Augment:
     def mixup(self, target, input_):
         lam = self.mixup_beta.sample([1,1])
     
-        r_index = paddle.randperm(target.shape[0]).numpy().tolist()
+        r_index = paddle.randperm(target.shape[0])
 
         target = lam * target + (1-lam) * target[r_index]
         input_ = lam * input_ + (1-lam) * input_[r_index]
@@ -75,46 +75,12 @@ class ImageCleanModel(BaseModel):
                                dual_pixel_task=False)
         self.print_network(self.net_g)
 
-        # load pretrained models
-        load_path = self.opt['path'].get('pretrain_network_g', None)
-        if load_path is not None:
-            self.load_network(self.net_g, load_path,
-                              self.opt['path'].get('strict_load_g', True), param_key=self.opt['path'].get('param_key', 'params'))
-
         if self.is_train:
             self.init_training_settings()
 
     def init_training_settings(self):
         self.net_g.train()
         train_opt = self.opt['train']
-
-        self.ema_decay = train_opt.get('ema_decay', 0)
-        if self.ema_decay > 0:
-            logger = get_root_logger()
-            logger.info(
-                f'Use Exponential Moving Average with decay: {self.ema_decay}')
-            # define network net_g with Exponential Moving Average (EMA)
-            # net_g_ema is used only for testing on one GPU and saving
-            # There is no need to wrap with DistributedDataParallel
-            self.net_g_ema = Restormer(inp_channels=3,
-                               out_channels=3,
-                               dim=48,
-                               num_blocks=[4,6,6,8],
-                               num_refinement_blocks=4,
-                               heads=[1,2,4,8],
-                               ffn_expansion_factor=2.66,
-                               bias=False,
-                               LayerNorm_type='BiasFree',
-                               dual_pixel_task=False)
-            # load pretrained model
-            load_path = self.opt['path'].get('pretrain_network_g', None)
-            if load_path is not None:
-                self.load_network(self.net_g_ema, load_path,
-                                  self.opt['path'].get('strict_load_g',
-                                                       True), 'params_ema')
-            else:
-                self.model_ema(0)  # copy net_g weight
-            self.net_g_ema.eval()
 
         # define losses
         if train_opt.get('pixel_opt'):
@@ -192,8 +158,6 @@ class ImageCleanModel(BaseModel):
 
         self.log_dict = self.reduce_loss_dict(loss_dict)
 
-        if self.ema_decay > 0:
-            self.model_ema(decay=self.ema_decay)
 
     def pad_test(self, window_size):        
         scale = self.opt.get('scale', 1)
@@ -248,7 +212,6 @@ class ImageCleanModel(BaseModel):
         cnt = 0
 
         for idx, val_data in enumerate(dataloader):
-            if idx > 1 : break
             img_name = osp.splitext(osp.basename(val_data['lq_path'][0]))[0]
 
             self.feed_data(val_data)
@@ -332,12 +295,8 @@ class ImageCleanModel(BaseModel):
             out_dict['gt'] = self.gt.detach().cpu()
         return out_dict
 
-    def save(self, epoch, current_iter):
-        if self.ema_decay > 0:
-            self.save_network([self.net_g, self.net_g_ema],
-                              'net_g',
-                              current_iter,
-                              param_key=['params', 'params_ema'])
-        else:
-            self.save_network(self.net_g, 'net_g', current_iter)
-        self.save_training_state(epoch, current_iter)
+    def save(self, epoch):
+        current_path = "output/model/"
+        os.makedirs(current_path, exist_ok=True)
+        paddle.save(os.path.join(current_path, f"{epoch}_model.pdparams"), self.net_g.state_dict())
+        paddle.save(os.path.join(current_path, f"{epoch}_model.pdopt"), self.optimizers[0].state_dict())

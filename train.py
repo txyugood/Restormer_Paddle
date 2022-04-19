@@ -68,6 +68,7 @@ def create_train_val_dataloader(opt, logger):
             train_loader = DataLoader(dataset=train_set,
                                       shuffle=True,
                                       drop_last=True,
+                                      num_workers=4,
                                       batch_size=dataset_opt['batch_size_per_gpu'])
 
             num_iter_per_epoch = math.ceil(
@@ -141,6 +142,9 @@ def main():
     epoch = start_epoch
     while current_iter <= total_iters:
         for idx, train_data in enumerate(train_loader):
+            current_iter += 1
+            if current_iter > total_iters:
+                break
             ### ------Progressive learning ---------------------
             j = ((current_iter > groups) != True).nonzero()[0]
             if len(j) == 0:
@@ -184,36 +188,32 @@ def main():
                 log_vars.update({'time': iter_time, 'data_time': data_time})
                 log_vars.update(model.get_current_log())
                 msg_logger(log_vars)
-
-            # save models and training states
-            if current_iter % opt['logger']['save_checkpoint_freq'] == 0:
-                logger.info('Saving models and training states.')
-                model.save(epoch, current_iter)
-
-            # validation
-            if opt.get('val') is not None and (current_iter %
-                                               opt['val']['val_freq'] == 0):
-                rgb2bgr = opt['val'].get('rgb2bgr', True)
-                # wheather use uint8 image to compute metrics
-                use_image = opt['val'].get('use_image', True)
-                model.validation(val_loader, current_iter,
-                                 opt['val']['save_img'], rgb2bgr, use_image)
-
             data_time = time.time()
             iter_time = time.time()
-            # end of iter
+
+        # save models and training states
+        logger.info('Saving models and training states.')
+        model.save(epoch)
+
+        # validation
+        rgb2bgr = opt['val'].get('rgb2bgr', True)
+        # wheather use uint8 image to compute metrics
+        use_image = opt['val'].get('use_image', True)
+        model.validation(val_loader, current_iter,
+                         opt['val']['save_img'], rgb2bgr, use_image)
+
         epoch += 1
 
-        # end of epoch
+    # end of epoch
 
-        consumed_time = str(
-            datetime.timedelta(seconds=int(time.time() - start_time)))
-        logger.info(f'End of training. Time consumed: {consumed_time}')
-        logger.info('Save the latest model.')
-        model.save(epoch=-1, current_iter=-1)  # -1 stands for the latest
-        if opt.get('val') is not None:
-            model.validation(val_loader, current_iter,
-                             opt['val']['save_img'])
+    consumed_time = str(
+        datetime.timedelta(seconds=int(time.time() - start_time)))
+    logger.info(f'End of training. Time consumed: {consumed_time}')
+    logger.info('Save the latest model.')
+    model.save(epoch="final")  # -1 stands for the latest
+    if opt.get('val') is not None:
+        model.validation(val_loader, current_iter,
+                         opt['val']['save_img'])
 
 
 if __name__ == '__main__':

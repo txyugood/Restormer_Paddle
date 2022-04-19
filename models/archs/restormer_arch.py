@@ -131,17 +131,17 @@ class Attention(nn.Layer):
         q,k,v = qkv.chunk(3, axis=1)
 
         b1, hc, h1, w1 = q.shape
-        q = paddle.reshape(q, [b1, self.num_heads, -1, h1, w1])
+        # q = paddle.reshape(q, [b1, self.num_heads, -1, h1, w1])
         q = paddle.reshape(q, [b1, self.num_heads, -1, (h1*w1)])
 
         # q = rearrange(q, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
         b1, hc, h1, w1 = k.shape
-        k = paddle.reshape(k, [b1, self.num_heads, -1, h1, w1])
+        # k = paddle.reshape(k, [b1, self.num_heads, -1, h1, w1])
         k = paddle.reshape(k, [b1, self.num_heads, -1, (h1*w1)])
         # k = rearrange(k, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
 
         b1, hc, h1, w1 = v.shape
-        v = paddle.reshape(v, [b1, self.num_heads, -1, h1, w1])
+        # v = paddle.reshape(v, [b1, self.num_heads, -1, h1, w1])
         v = paddle.reshape(v, [b1, self.num_heads, -1, (h1*w1)])
         # v = rearrange(v, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
 
@@ -156,7 +156,7 @@ class Attention(nn.Layer):
         b, head, c, hw = out.shape
 
         # out = rearrange(out, 'b head c (h w) -> b (head c) h w', head=self.num_heads, h=h, w=w)
-        out = paddle.reshape(out, [b, head, c, h, w])
+        # out = paddle.reshape(out, [b, head, c, h, w])
         out = paddle.reshape(out, [b, head * c, h, w])
 
         out = self.project_out(out)
