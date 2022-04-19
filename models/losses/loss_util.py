@@ -1,5 +1,5 @@
 import functools
-from torch.nn import functional as F
+from paddle.nn import functional as F
 
 
 def reduce_loss(loss, reduction):
