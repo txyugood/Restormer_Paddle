@@ -298,5 +298,5 @@ class ImageCleanModel(BaseModel):
     def save(self, epoch):
         current_path = "output/model/"
         os.makedirs(current_path, exist_ok=True)
-        paddle.save(os.path.join(current_path, f"{epoch}_model.pdparams"), self.net_g.state_dict())
-        paddle.save(os.path.join(current_path, f"{epoch}_model.pdopt"), self.optimizers[0].state_dict())
+        paddle.save(self.net_g.state_dict(), os.path.join(current_path, f"{epoch}_model.pdparams"))
+        paddle.save(self.optimizers[0].state_dict(), os.path.join(current_path, f"{epoch}_model.pdopt"))
