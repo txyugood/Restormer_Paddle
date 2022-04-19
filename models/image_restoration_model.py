@@ -73,10 +73,23 @@ class ImageCleanModel(BaseModel):
                                bias=False,
                                LayerNorm_type='BiasFree',
                                dual_pixel_task=False)
-        self.print_network(self.net_g)
-
         if self.is_train:
             self.init_training_settings()
+
+        nranks = paddle.distributed.ParallelEnv().nranks
+        local_rank = paddle.distributed.ParallelEnv().local_rank
+        if nranks > 1:
+            # Initialize parallel environment if not done.
+            if not paddle.distributed.parallel.parallel_helper._is_parallel_ctx_initialized(
+            ):
+                paddle.distributed.init_parallel_env()
+                self.net_g = paddle.DataParallel(self.net_g)
+            else:
+                self.net_g = paddle.DataParallel(self.net_g)
+
+        if local_rank == 0:
+            self.print_network(self.net_g)
+
 
     def init_training_settings(self):
         self.net_g.train()

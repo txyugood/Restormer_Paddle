@@ -60,40 +60,44 @@ def init_loggers(opt):
 
 def create_train_val_dataloader(opt, logger):
     # create train and val dataloaders
+    local_rank = paddle.distributed.ParallelEnv().local_rank
     train_loader, val_loader = None, None
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':
             dataset_enlarge_ratio = dataset_opt.get('dataset_enlarge_ratio', 1)
             train_set = Dataset_GaussianDenoising(dataset_opt)
+            batch_sampler = paddle.io.DistributedBatchSampler(
+                train_set, batch_size=dataset_opt['batch_size_per_gpu'], shuffle=True, drop_last=True)
             train_loader = DataLoader(dataset=train_set,
-                                      shuffle=True,
-                                      drop_last=True,
-                                      num_workers=4,
-                                      batch_size=dataset_opt['batch_size_per_gpu'])
+                                      batch_sampler=batch_sampler,
+                                      num_workers=4)
 
             num_iter_per_epoch = math.ceil(
                 len(train_set) * dataset_enlarge_ratio /
                 (dataset_opt['batch_size_per_gpu'] * opt['world_size']))
             total_iters = int(opt['train']['total_iter'])
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
-            logger.info(
-                'Training statistics:'
-                f'\n\tNumber of train images: {len(train_set)}'
-                f'\n\tDataset enlarge ratio: {dataset_enlarge_ratio}'
-                f'\n\tBatch size per gpu: {dataset_opt["batch_size_per_gpu"]}'
-                f'\n\tWorld size (gpu number): {opt["world_size"]}'
-                f'\n\tRequire iter number per epoch: {num_iter_per_epoch}'
-                f'\n\tTotal epochs: {total_epochs}; iters: {total_iters}.')
+            if local_rank == 0:
+                logger.info(
+                    'Training statistics:'
+                    f'\n\tNumber of train images: {len(train_set)}'
+                    f'\n\tDataset enlarge ratio: {dataset_enlarge_ratio}'
+                    f'\n\tBatch size per gpu: {dataset_opt["batch_size_per_gpu"]}'
+                    f'\n\tWorld size (gpu number): {opt["world_size"]}'
+                    f'\n\tRequire iter number per epoch: {num_iter_per_epoch}'
+                    f'\n\tTotal epochs: {total_epochs}; iters: {total_iters}.')
 
         elif phase == 'val':
             val_set = Dataset_GaussianDenoising(dataset_opt)
+            batch_sampler = paddle.io.DistributedBatchSampler(
+                val_set, batch_size=1, shuffle=False, drop_last=False)
             val_loader = DataLoader(dataset=val_set,
-                                    batch_size=1,
-                                    shuffle=False,
+                                    batch_sampler=batch_sampler,
                                     num_workers=0)
-            logger.info(
-                f'Number of val images/folders in {dataset_opt["name"]}: '
-                f'{len(val_set)}')
+            if local_rank == 0:
+                logger.info(
+                    f'Number of val images/folders in {dataset_opt["name"]}: '
+                    f'{len(val_set)}')
         else:
             raise ValueError(f'Dataset phase {phase} is not recognized.')
 
@@ -104,6 +108,13 @@ def create_train_val_dataloader(opt, logger):
 def main():
     opt = parse_options(is_train=True)
 
+    nranks = paddle.distributed.ParallelEnv().nranks
+    local_rank = paddle.distributed.ParallelEnv().local_rank
+    if nranks > 1:
+        # Initialize parallel environment if not done.
+        if not paddle.distributed.parallel.parallel_helper._is_parallel_ctx_initialized(
+        ):
+            paddle.distributed.init_parallel_env()
     # mkdir for experiments and logger
 
     make_exp_dirs(opt)
@@ -123,8 +134,9 @@ def main():
     current_iter = 0
     msg_logger = MessageLogger(opt, current_iter)
     # training
-    logger.info(
-        f'Start training from epoch: {start_epoch}, iter: {current_iter}')
+    if local_rank == 0:
+        logger.info(
+            f'Start training from epoch: {start_epoch}, iter: {current_iter}')
     data_time, iter_time = time.time(), time.time()
     start_time = time.time()
     iters = opt['datasets']['train'].get('iters')
@@ -155,7 +167,7 @@ def main():
             mini_gt_size = mini_gt_sizes[bs_j]
             mini_batch_size = mini_batch_sizes[bs_j]
 
-            if logger_j[bs_j]:
+            if logger_j[bs_j] and local_rank == 0:
                 logger.info('\n Updating Patch_Size to {} and Batch_Size to {} \n'.format(mini_gt_size,
                                                                                           mini_batch_size))
                 logger_j[bs_j] = False
@@ -182,7 +194,7 @@ def main():
 
             iter_time = time.time() - iter_time
             # log
-            if current_iter % opt['logger']['print_freq'] == 0:
+            if current_iter % opt['logger']['print_freq'] == 0 and local_rank == 0:
                 log_vars = {'epoch': epoch, 'iter': current_iter}
                 log_vars.update({'lrs': model.get_current_learning_rate()})
                 log_vars.update({'time': iter_time, 'data_time': data_time})
@@ -190,28 +202,28 @@ def main():
                 msg_logger(log_vars)
             data_time = time.time()
             iter_time = time.time()
+        if local_rank == 0:
+            # save models and training states
+            logger.info('Saving models and training states.')
+            model.save(epoch)
 
-        # save models and training states
-        logger.info('Saving models and training states.')
-        model.save(epoch)
-
-        # validation
-        rgb2bgr = opt['val'].get('rgb2bgr', True)
-        # wheather use uint8 image to compute metrics
-        use_image = opt['val'].get('use_image', True)
-        model.validation(val_loader, current_iter,
-                         opt['val']['save_img'], rgb2bgr, use_image)
+            # validation
+            rgb2bgr = opt['val'].get('rgb2bgr', True)
+            # wheather use uint8 image to compute metrics
+            use_image = opt['val'].get('use_image', True)
+            model.validation(val_loader, current_iter,
+                             opt['val']['save_img'], rgb2bgr, use_image)
 
         epoch += 1
 
     # end of epoch
-
-    consumed_time = str(
-        datetime.timedelta(seconds=int(time.time() - start_time)))
-    logger.info(f'End of training. Time consumed: {consumed_time}')
-    logger.info('Save the latest model.')
-    model.save(epoch="final")  # -1 stands for the latest
-    if opt.get('val') is not None:
+    if local_rank == 0:
+        consumed_time = str(
+            datetime.timedelta(seconds=int(time.time() - start_time)))
+        logger.info(f'End of training. Time consumed: {consumed_time}')
+        logger.info('Save the latest model.')
+        model.save(epoch="final")  # -1 stands for the latest
+    if opt.get('val') is not None and local_rank == 0:
         model.validation(val_loader, current_iter,
                          opt['val']['save_img'])
 
