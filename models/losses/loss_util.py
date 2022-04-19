@@ -1,5 +1,4 @@
 import functools
-from paddle.nn import functional as F
 
 
 def reduce_loss(loss, reduction):
@@ -12,11 +11,10 @@ def reduce_loss(loss, reduction):
     Returns:
         Tensor: Reduced loss tensor.
     """
-    reduction_enum = F._Reduction.get_enum(reduction)
     # none: 0, elementwise_mean:1, sum: 2
-    if reduction_enum == 0:
+    if reduction == None:
         return loss
-    elif reduction_enum == 1:
+    elif reduction == 'mean':
         return loss.mean()
     else:
         return loss.sum()
