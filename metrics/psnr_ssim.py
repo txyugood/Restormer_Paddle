@@ -59,7 +59,7 @@ def calculate_psnr(img1,
     mse = np.mean((img1 - img2)**2)
     if mse == 0:
         return float('inf')
-    max_value = 1. if img1.max() <= 1 else 255.
+    max_value = 1. if img2.max() <= 1 else 255.
     return 20. * np.log10(max_value / np.sqrt(mse))
 
 
