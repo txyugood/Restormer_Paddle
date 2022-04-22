@@ -32,7 +32,7 @@ def parse_options(is_train=True):
     opt = parse(args.opt, is_train=is_train)
 
     # distributed settings
-    opt['resume'] = opt.resume
+
     opt['dist'] = False
     print('Disable distributed.', flush=True)
 
@@ -48,7 +48,7 @@ def parse_options(is_train=True):
     np.random.seed(seed)
     paddle.seed(seed)
 
-    return opt
+    return opt, args
 
 def init_loggers(opt):
     log_file = osp.join(opt['path']['log'],
@@ -103,12 +103,12 @@ def create_train_val_dataloader(opt, logger):
         else:
             raise ValueError(f'Dataset phase {phase} is not recognized.')
 
-    return train_loader, val_loader, total_epochs, total_iters
+    return train_loader, val_loader, total_epochs, total_iters, num_iter_per_epoch
 
 
 
 def main():
-    opt = parse_options(is_train=True)
+    opt, args = parse_options(is_train=True)
 
     nranks = paddle.distributed.ParallelEnv().nranks
     local_rank = paddle.distributed.ParallelEnv().local_rank
@@ -129,21 +129,20 @@ def main():
 
     # create train and validation dataloaders
     result = create_train_val_dataloader(opt, logger)
-    train_loader, val_loader, total_epochs, total_iters = result
+    train_loader, val_loader, total_epochs, total_iters, num_iter_per_epoch = result
 
     model = ImageCleanModel(opt)
     start_epoch = 0
     current_iter = 0
 
-    if opt['resume'] is not None:
-        state_dict = paddle.load(opt.resume+".pdparams")
+    if args.resume is not None:
+        state_dict = paddle.load(args.resume+".pdparams")
         model.net_g.set_state_dict(state_dict)
-        state_dict = paddle.load(opt.resume + ".pdopt")
+        state_dict = paddle.load(args.resume + ".pdopt")
         model.optimizer_g.set_state_dict(state_dict)
-        start_epoch = opt.resume.split('/')[-1].split('_')[0]
-        start_epoch = int(start_epoch)
-        current_iter = start_epoch * len(train_loader)
-        start_epoch += 1
+        start_epoch = args.resume.split('/')[-1].split('_')[0]
+        start_epoch = int(start_epoch) + 1
+        current_iter = start_epoch * num_iter_per_epoch
 
     msg_logger = MessageLogger(opt, current_iter)
     # training

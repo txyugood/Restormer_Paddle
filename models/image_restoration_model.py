@@ -309,7 +309,7 @@ class ImageCleanModel(BaseModel):
         return out_dict
 
     def save(self, epoch):
-        current_path = "/root/paddlejob/workspace/output/model/"
+        current_path = "output/model/"
         os.makedirs(current_path, exist_ok=True)
         paddle.save(self.net_g.state_dict(), os.path.join(current_path, f"{epoch}_model.pdparams"))
         paddle.save(self.optimizers[0].state_dict(), os.path.join(current_path, f"{epoch}_model.pdopt"))
