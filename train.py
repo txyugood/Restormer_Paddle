@@ -32,7 +32,7 @@ def parse_options(is_train=True):
     opt = parse(args.opt, is_train=is_train)
 
     # distributed settings
-
+    opt['resume'] = opt.resume
     opt['dist'] = False
     print('Disable distributed.', flush=True)
 
@@ -135,7 +135,7 @@ def main():
     start_epoch = 0
     current_iter = 0
 
-    if opt.resume is not None:
+    if opt['resume'] is not None:
         state_dict = paddle.load(opt.resume+".pdparams")
         model.net_g.set_state_dict(state_dict)
         state_dict = paddle.load(opt.resume + ".pdopt")
@@ -143,6 +143,7 @@ def main():
         start_epoch = opt.resume.split('/')[-1].split('_')[0]
         start_epoch = int(start_epoch)
         current_iter = start_epoch * len(train_loader)
+        start_epoch += 1
 
     msg_logger = MessageLogger(opt, current_iter)
     # training
