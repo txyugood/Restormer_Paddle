@@ -5,6 +5,7 @@ import logging
 import os.path as osp
 import time
 import datetime
+import os
 
 import numpy as np
 import paddle
@@ -26,6 +27,7 @@ def parse_options(is_train=True):
         default='none',
         help='job launcher')
     parser.add_argument('--local_rank', type=int, default=0)
+    parser.add_argument("--resume", type=str, default=None)
     args = parser.parse_args()
     opt = parse(args.opt, is_train=is_train)
 
@@ -132,6 +134,16 @@ def main():
     model = ImageCleanModel(opt)
     start_epoch = 0
     current_iter = 0
+
+    if opt.resume is not None:
+        state_dict = paddle.load(opt.resume+".pdparams")
+        model.net_g.set_state_dict(state_dict)
+        state_dict = paddle.load(opt.resume + ".pdopt")
+        model.optimizer_g.set_state_dict(state_dict)
+        start_epoch = opt.resume.split('/')[-1].split('_')[0]
+        start_epoch = int(start_epoch)
+        current_iter = start_epoch * len(train_loader)
+
     msg_logger = MessageLogger(opt, current_iter)
     # training
     if local_rank == 0:

@@ -13,7 +13,7 @@ datasets:
     sigma_type: constant
     sigma_range: 15
     in_ch: 3    ## RGB image
-    dataroot_gt: /Users/alex/Downloads/Datasets/train/DFWB
+    dataroot_gt: /root/paddlejob/workspace/train_data/datasets//Datasets/train/DFWB
     dataroot_lq: none
     geometric_augs: true
 
@@ -48,7 +48,7 @@ datasets:
     type: Dataset_GaussianDenoising
     sigma_test: 15
     in_ch: 3  ## RGB image
-    dataroot_gt: /Users/alex/Downloads/Datasets/test/CBSD68
+    dataroot_gt: /root/paddlejob/workspace/train_data/datasets//Datasets/test/CBSD68
     dataroot_lq: none
     io_backend:
       type: disk
