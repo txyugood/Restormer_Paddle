@@ -3,6 +3,7 @@ import random
 
 import cv2
 import numpy as np
+import paddle
 from paddle.io import Dataset
 
 from utils.misc import scandir
@@ -119,7 +120,8 @@ class Dataset_GaussianDenoising(Dataset):
 
             noise_level = sigma_value / 255.0
             # noise_level_map = torch.ones((1, img_lq.size(1), img_lq.size(2))).mul_(noise_level).float()
-            noise = np.random.randn(*img_lq.shape) * noise_level
+            # noise = np.random.randn(*img_lq.shape) * noise_level
+            noise = paddle.randn(img_lq.shape,dtype='float32').numpy() * noise_level
 
             img_lq = img_lq + noise.astype('float32')
 
