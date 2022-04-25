@@ -13,7 +13,7 @@ datasets:
     sigma_type: random
     sigma_range: [0,50]
     in_ch: 3    ## RGB image
-    dataroot_gt: ./Denoising/Datasets/train/DFWB
+    dataroot_gt: /home/aistudio/data/Datasets/train/DFWB
     dataroot_lq: none
     geometric_augs: true
 
@@ -46,9 +46,9 @@ datasets:
   val:
     name: ValSet
     type: Dataset_GaussianDenoising
-    sigma_test: 25
+    sigma_test: 15
     in_ch: 3  ## RGB image
-    dataroot_gt: ./Denoising/Datasets/test/CBSD68
+    dataroot_gt: /home/aistudio/data/Datasets/test/CBSD68
     dataroot_lq: none
     io_backend:
       type: disk
@@ -75,7 +75,7 @@ path:
 
 # training settings
 train:
-  total_iter: 300000
+  total_iter: 400000
   warmup_iter: -1 # no warm up
   use_grad_clip: true
 
@@ -84,6 +84,7 @@ train:
   # 2nd cycle: cosine annealing (3e-4 to 1e-6) for 208k iters.
   scheduler:
     type: CosineAnnealingRestartCyclicLR
+    learning_rate: !!float 3e-4
     periods: [92000, 208000]       
     restart_weights: [1,1]
     eta_mins: [0.0003,0.000001]   
@@ -95,9 +96,9 @@ train:
 
   optim_g:
     type: AdamW
-    lr: !!float 3e-4
     weight_decay: !!float 1e-4
-    betas: [0.9, 0.999]
+    beta1: 0.9
+    beta2: 0.999
   
   # losses
   pixel_opt:
@@ -122,9 +123,9 @@ val:
 
 # logging settings
 logger:
-  print_freq: 1000
+  print_freq: 10
   save_checkpoint_freq: !!float 4e3
-  use_tb_logger: true
+  use_tb_logger: false
   wandb:
     project: ~
     resume_id: ~
