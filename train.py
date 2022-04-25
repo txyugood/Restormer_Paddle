@@ -119,10 +119,11 @@ def main():
             paddle.distributed.init_parallel_env()
     # mkdir for experiments and logger
 
-    make_exp_dirs(opt)
-    if opt['logger'].get('use_tb_logger') and 'debug' not in opt[
-            'name'] and opt['rank'] == 0:
-        mkdir_and_rename(osp.join('tb_logger', opt['name']))
+    if local_rank == 0:
+        make_exp_dirs(opt)
+        if opt['logger'].get('use_tb_logger') and 'debug' not in opt[
+                'name'] and opt['rank'] == 0:
+            mkdir_and_rename(osp.join('tb_logger', opt['name']))
 
     # initialize loggers
     logger = init_loggers(opt)
