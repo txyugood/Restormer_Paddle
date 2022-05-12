@@ -19,18 +19,18 @@ import numpy as np
 import cv2
 import paddle.nn.functional as F
 from functools import partial
-from paddle.distribution import Beta
 
 class Mixing_Augment:
     def __init__(self, mixup_beta, use_identity):
-        self.mixup_beta = Beta(mixup_beta, mixup_beta)
 
         self.use_identity = use_identity
-
+        self.mixup_beta = mixup_beta
         self.augments = [self.mixup]
 
     def mixup(self, target, input_):
-        lam = self.mixup_beta.sample([1,1])
+        # lam = self.mixup_beta.sample([1, 1])
+        lam = np.random.beta(self.mixup_beta, self.mixup_beta, [1, 1])
+        lam = paddle.to_tensor(lam.astype("float32"))
     
         r_index = paddle.randperm(target.shape[0])
 
@@ -309,7 +309,7 @@ class ImageCleanModel(BaseModel):
         return out_dict
 
     def save(self, epoch):
-        current_path = "output/model/"
+        current_path = "/root/paddlejob/workspace/output/model/"
         os.makedirs(current_path, exist_ok=True)
         paddle.save(self.net_g.state_dict(), os.path.join(current_path, f"{epoch}_model.pdparams"))
         paddle.save(self.optimizers[0].state_dict(), os.path.join(current_path, f"{epoch}_model.pdopt"))

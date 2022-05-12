@@ -13,7 +13,7 @@ datasets:
     sigma_type: random
     sigma_range: [0,50]
     in_ch: 3    ## RGB image
-    dataroot_gt: /home/aistudio/data/Datasets/train/DFWB
+    dataroot_gt: /root/paddlejob/workspace/train_data/datasets/Datasets/train/DFWB
     dataroot_lq: none
     geometric_augs: true
 
@@ -28,7 +28,7 @@ datasets:
 
     ### -------------Progressive training--------------------------
     mini_batch_sizes: [8,5,4,2,1,1]             # Batch size per gpu   
-    iters: [92000,64000,48000,36000,36000,24000]
+    iters: [184000,128000,96000,72000,72000,48000]
     gt_size: 384   # Max patch size for progressive training
     gt_sizes: [128,160,192,256,320,384]  # Patch sizes for progressive training.
     ### ------------------------------------------------------------
@@ -48,7 +48,7 @@ datasets:
     type: Dataset_GaussianDenoising
     sigma_test: 15
     in_ch: 3  ## RGB image
-    dataroot_gt: /home/aistudio/data/Datasets/test/CBSD68
+    dataroot_gt: /root/paddlejob/workspace/train_data/datasets/Datasets/test/CBSD68
     dataroot_lq: none
     io_backend:
       type: disk
@@ -75,7 +75,7 @@ path:
 
 # training settings
 train:
-  total_iter: 300000
+  total_iter: 600000
   warmup_iter: -1 # no warm up
   use_grad_clip: true
 
@@ -84,8 +84,8 @@ train:
   # 2nd cycle: cosine annealing (3e-4 to 1e-6) for 208k iters.
   scheduler:
     type: CosineAnnealingRestartCyclicLR
-    learning_rate: !!float 3e-4
-    periods: [92000, 208000]
+    learning_rate: !!float 1.5e-4
+    periods: [184000, 416000]
     restart_weights: [1,1]
     eta_mins: [0.0003,0.000001]
   
@@ -123,7 +123,7 @@ val:
 
 # logging settings
 logger:
-  print_freq: 10
+  print_freq: 100
   save_checkpoint_freq: !!float 4e3
   use_tb_logger: false
   wandb:

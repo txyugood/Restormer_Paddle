@@ -17,6 +17,7 @@ from utils.misc import get_time_str, make_exp_dirs, mkdir_and_rename
 from dataset import Dataset_GaussianDenoising
 from models.image_restoration_model import ImageCleanModel
 
+
 def parse_options(is_train=True):
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -50,6 +51,7 @@ def parse_options(is_train=True):
 
     return opt, args
 
+
 def init_loggers(opt):
     log_file = osp.join(opt['path']['log'],
                         f"train_{opt['name']}_{get_time_str()}.log")
@@ -59,6 +61,7 @@ def init_loggers(opt):
     logger.info(dict2str(opt))
 
     return logger
+
 
 def create_train_val_dataloader(opt, logger):
     # create train and val dataloaders
@@ -106,7 +109,6 @@ def create_train_val_dataloader(opt, logger):
     return train_loader, val_loader, total_epochs, total_iters, num_iter_per_epoch
 
 
-
 def main():
     opt, args = parse_options(is_train=True)
 
@@ -117,6 +119,7 @@ def main():
         if not paddle.distributed.parallel.parallel_helper._is_parallel_ctx_initialized(
         ):
             paddle.distributed.init_parallel_env()
+        opt['world_size'] = nranks
     # mkdir for experiments and logger
 
     if local_rank == 0:
