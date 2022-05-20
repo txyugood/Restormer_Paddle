@@ -27,7 +27,7 @@ class BaseModel():
     def get_current_visuals(self):
         pass
 
-    def save(self, epoch, current_iter):
+    def save(self, prefix_name):
         """Save networks and training state."""
         pass
 

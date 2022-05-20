@@ -72,6 +72,7 @@ path:
   pretrain_network_g: ~
   strict_load_g: true
   resume_state: ~
+  output: /root/paddlejob/workspace/output/
 
 # training settings
 train:
@@ -87,7 +88,7 @@ train:
     learning_rate: !!float 1.5e-4
     periods: [184000, 416000]
     restart_weights: [1,1]
-    eta_mins: [0.0003,0.000001]
+    eta_mins: [0.00015,0.000001]
   
   mixing_augs:
     mixup: true

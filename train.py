@@ -53,8 +53,9 @@ def parse_options(is_train=True):
 
 
 def init_loggers(opt):
+    os.makedirs(opt['path']['log'], exist_ok=True)
     log_file = osp.join(opt['path']['log'],
-                        f"train_{opt['name']}_{get_time_str()}.log")
+                        f"train_{opt['name']}.log")
     logger = get_root_logger(
         logger_name='basicsr', log_level=logging.INFO, log_file=log_file)
 
@@ -77,9 +78,7 @@ def create_train_val_dataloader(opt, logger):
                                       batch_sampler=batch_sampler,
                                       num_workers=4)
 
-            num_iter_per_epoch = math.ceil(
-                len(train_loader) * dataset_enlarge_ratio /
-                (dataset_opt['batch_size_per_gpu'] * opt['world_size']))
+            num_iter_per_epoch = math.ceil(len(train_loader) * dataset_enlarge_ratio)
             total_iters = int(opt['train']['total_iter'])
             total_epochs = math.ceil(total_iters / (num_iter_per_epoch))
             if local_rank == 0:
@@ -122,20 +121,21 @@ def main():
         opt['world_size'] = nranks
     # mkdir for experiments and logger
 
-    if local_rank == 0:
-        make_exp_dirs(opt)
-        if opt['logger'].get('use_tb_logger') and 'debug' not in opt[
-                'name'] and opt['rank'] == 0:
-            mkdir_and_rename(osp.join('tb_logger', opt['name']))
+    # if local_rank == 0:
+    #     make_exp_dirs(opt)
+    #     if opt['logger'].get('use_tb_logger') and 'debug' not in opt[
+    #             'name'] and opt['rank'] == 0:
+    #         mkdir_and_rename(osp.join('tb_logger', opt['name']))
 
     # initialize loggers
     logger = init_loggers(opt)
 
+    model = ImageCleanModel(opt)
     # create train and validation dataloaders
     result = create_train_val_dataloader(opt, logger)
     train_loader, val_loader, total_epochs, total_iters, num_iter_per_epoch = result
 
-    model = ImageCleanModel(opt)
+
     start_epoch = 0
     current_iter = 0
 
@@ -168,6 +168,7 @@ def main():
     scale = opt['scale']
 
     epoch = start_epoch
+    best_metric = 0
     while current_iter <= total_iters:
         for idx, train_data in enumerate(train_loader):
             current_iter += 1
@@ -220,15 +221,19 @@ def main():
             iter_time = time.time()
         if local_rank == 0:
             # save models and training states
-            logger.info('Saving models and training states.')
-            model.save(epoch)
+            logger.info(f'Saving models and training states on epoch {epoch}.')
+            model.save()
 
             # validation
             rgb2bgr = opt['val'].get('rgb2bgr', True)
             # wheather use uint8 image to compute metrics
             use_image = opt['val'].get('use_image', True)
-            model.validation(val_loader, current_iter,
+            current_metric = model.validation(val_loader, current_iter,
                              opt['val']['save_img'], rgb2bgr, use_image)
+            if current_metric > best_metric:
+                best_metric = current_metric
+                logger.info(f'Saving best models and training states on epoch {epoch}.')
+                model.save(prefix_name='best')
 
         epoch += 1
 
@@ -238,10 +243,14 @@ def main():
             datetime.timedelta(seconds=int(time.time() - start_time)))
         logger.info(f'End of training. Time consumed: {consumed_time}')
         logger.info('Save the latest model.')
-        model.save(epoch="final")  # -1 stands for the latest
+        model.save()  # -1 stands for the latest
     if opt.get('val') is not None and local_rank == 0:
+        rgb2bgr = opt['val'].get('rgb2bgr', True)
+        use_image = opt['val'].get('use_image', True)
         model.validation(val_loader, current_iter,
-                         opt['val']['save_img'])
+                         opt['val']['save_img'],
+                         rgb2bgr=rgb2bgr,
+                         use_image=use_image)
 
 
 if __name__ == '__main__':
