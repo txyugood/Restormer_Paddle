@@ -26,6 +26,7 @@ def proc(filename):
 
 parser = argparse.ArgumentParser(description='Gasussian Color Denoising using Restormer')
 
+parser.add_argument('--dataset_root', default='/Users/alex/Downloads/Datasets/', type=str, help='Directory of validation images')
 parser.add_argument('--model_type', required=True, choices=['non_blind','blind'], type=str, help='blind: single model to handle various noise levels. non_blind: separate model for each noise level.')
 parser.add_argument('--sigmas', default='15,25,50', type=str, help='Sigma values')
 
@@ -33,11 +34,11 @@ args = parser.parse_args()
 
 sigmas = np.int_(args.sigmas.split(','))
 
-datasets = ['CBSD68', 'Kodak', 'McMaster','Urban100']
+datasets = ['CBSD68']
 
 for dataset in datasets:
 
-    gt_path = os.path.join('Datasets','test', dataset)
+    gt_path = os.path.join(args.dataset_root, 'test', dataset)
     gt_list = natsorted(glob(os.path.join(gt_path, '*.png')) + glob(os.path.join(gt_path, '*.tif')))
     assert len(gt_list) != 0, "Target files not found"
 
