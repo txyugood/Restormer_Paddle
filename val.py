@@ -76,7 +76,7 @@ for sigma_test in sigmas:
                 np.random.seed(seed=0)  # for reproducibility
                 img = origin_img + np.random.normal(0, sigma_test/255., origin_img.shape)
 
-                img = paddle.to_tensor(img)
+                img = paddle.to_tensor(img.astype('float32'))
                 img = paddle.transpose(img, [2, 0, 1])
                 input_ = img.unsqueeze(0)
 
