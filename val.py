@@ -7,6 +7,7 @@ import os
 import argparse
 from tqdm import tqdm
 
+from paddle.io import DataLoader
 from models.archs.restormer_arch import Restormer
 from skimage import img_as_ubyte
 from natsort import natsorted
@@ -17,6 +18,7 @@ import paddle.nn.functional as F
 from utils.utils import load_pretrained_model
 from metrics import calculate_psnr
 from pdb import set_trace as stx
+from dataset import Dataset_GaussianDenoising
 
 parser = argparse.ArgumentParser(description='Gaussian Color Denoising using Restormer')
 
@@ -63,21 +65,19 @@ for sigma_test in sigmas:
     print("------------------------------------------------")
     model_restoration.eval()
 
+    x['datasets']['val']['phase'] = 'val'
+    x['datasets']['val']['scale'] = 1
+    val_set = Dataset_GaussianDenoising(x['datasets']['val'])
+    batch_sampler = paddle.io.DistributedBatchSampler(
+        val_set, batch_size=1, shuffle=False, drop_last=False)
+    val_loader = DataLoader(dataset=val_set,
+                            batch_sampler=batch_sampler,
+                            num_workers=0)
     for dataset in datasets:
-        inp_dir = os.path.join(args.input_dir, dataset)
-        files = natsorted(glob(os.path.join(inp_dir, '*.png')) + glob(os.path.join(inp_dir, '*.tif')))
-
         psnr = []
         with paddle.no_grad():
-            for file_ in tqdm(files):
-                origin_img = np.float32(load_img(file_)) / 255.
-
-                np.random.seed(seed=0)  # for reproducibility
-                img = origin_img + np.random.normal(0, sigma_test / 255., origin_img.shape)
-
-                img = paddle.to_tensor(img.astype('float32'))
-                img = paddle.transpose(img, [2, 0, 1])
-                input_ = img.unsqueeze(0)
+            for data in tqdm(val_loader):
+                input_ = data['lq']
 
                 # Padding in case images are not multiples of 8
                 h, w = input_.shape[2], input_.shape[3]
@@ -92,8 +92,8 @@ for sigma_test in sigmas:
                 restored = restored[:, :, :h, :w]
 
                 restored = paddle.clip(restored, 0, 1).detach()
-                restored = paddle.transpose(restored, [0, 2, 3, 1]).squeeze(0).numpy()
-                psnr.append(calculate_psnr(origin_img, restored, 0))
+                # restored = paddle.transpose(restored, [0, 2, 3, 1]).squeeze(0).numpy()
+                psnr.append(calculate_psnr(restored, data['gt'], 0))
 
         avg_psnr = sum(psnr) / len(psnr)
         print('For {:s} dataset Noise Level {:d} PSNR: {:f}\n'.format(dataset, sigma_test, avg_psnr))
