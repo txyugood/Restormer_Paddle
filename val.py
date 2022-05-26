@@ -73,27 +73,7 @@ for sigma_test in sigmas:
     val_loader = DataLoader(dataset=val_set,
                             batch_sampler=batch_sampler,
                             num_workers=0)
-    for dataset in datasets:
-        psnr = []
-        with paddle.no_grad():
-            for data in tqdm(val_loader):
-                input_ = data['lq']
-
-                # Padding in case images are not multiples of 8
-                h, w = input_.shape[2], input_.shape[3]
-                H, W = ((h + factor) // factor) * factor, ((w + factor) // factor) * factor
-                padh = H - h if h % factor != 0 else 0
-                padw = W - w if w % factor != 0 else 0
-                input_ = F.pad(input_, (0, padw, 0, padh), 'reflect')
-
-                restored = model_restoration(input_)
-
-                # Unpad images to original dimensions
-                restored = restored[:, :, :h, :w]
-
-                restored = paddle.clip(restored, 0, 1).detach()
-                # restored = paddle.transpose(restored, [0, 2, 3, 1]).squeeze(0).numpy()
-                psnr.append(calculate_psnr(restored, data['gt'], 0))
-
-        avg_psnr = sum(psnr) / len(psnr)
-        print('For {:s} dataset Noise Level {:d} PSNR: {:f}\n'.format(dataset, sigma_test, avg_psnr))
+    model_restoration.validation(val_loader, 0,
+                                 False,
+                                 rgb2bgr=True,
+                                 use_image=False)
