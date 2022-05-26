@@ -2,23 +2,15 @@
 ## Syed Waqas Zamir, Aditya Arora, Salman Khan, Munawar Hayat, Fahad Shahbaz Khan, and Ming-Hsuan Yang
 ## https://arxiv.org/abs/2111.09881
 
-import numpy as np
-import os
 import argparse
-from tqdm import tqdm
 
-from paddle.io import DataLoader
-from models.archs.restormer_arch import Restormer
-from skimage import img_as_ubyte
-from natsort import natsorted
-from glob import glob
-from utils.utils import load_img, save_img
+import numpy as np
 import paddle
-import paddle.nn.functional as F
-from utils.utils import load_pretrained_model
-from metrics import calculate_psnr
-from pdb import set_trace as stx
+from paddle.io import DataLoader
+
 from dataset import Dataset_GaussianDenoising
+from models.image_restoration_model import ImageCleanModel
+from utils.utils import load_pretrained_model
 
 parser = argparse.ArgumentParser(description='Gaussian Color Denoising using Restormer')
 
@@ -58,12 +50,14 @@ datasets = ['CBSD68']
 
 for sigma_test in sigmas:
     print("Compute results for noise level", sigma_test)
-    model_restoration = Restormer(**x['network_g'])
+    # model_restoration = Restormer(**x['network_g'])
+    x['is_train'] = False
+    model = ImageCleanModel(x)
 
-    load_pretrained_model(model_restoration, args.weights)
+
+    load_pretrained_model(model.net_g, args.weights)
     print("===>Testing using weights: ", args.weights)
     print("------------------------------------------------")
-    model_restoration.eval()
 
     x['datasets']['val']['phase'] = 'val'
     x['datasets']['val']['scale'] = 1
@@ -73,7 +67,7 @@ for sigma_test in sigmas:
     val_loader = DataLoader(dataset=val_set,
                             batch_sampler=batch_sampler,
                             num_workers=0)
-    model_restoration.validation(val_loader, 0,
+    model.validation(val_loader, 0,
                                  False,
                                  rgb2bgr=True,
                                  use_image=False)
