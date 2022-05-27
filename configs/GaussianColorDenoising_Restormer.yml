@@ -48,7 +48,7 @@ datasets:
     type: Dataset_GaussianDenoising
     sigma_test: 15
     in_ch: 3  ## RGB image
-    dataroot_gt: /root/paddlejob/workspace/train_data/datasets/Datasets/test/CBSD68
+    dataroot_gt: /Users/alex/Downloads/CBSD68
     dataroot_lq: none
     io_backend:
       type: disk

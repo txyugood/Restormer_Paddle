@@ -132,17 +132,20 @@ class Attention(nn.Layer):
 
         b1, hc, h1, w1 = q.shape
         # q = paddle.reshape(q, [b1, self.num_heads, -1, h1, w1])
-        q = paddle.reshape(q, [b1, self.num_heads, -1, (h1*w1)])
+        c = hc // self.num_heads
+        q = paddle.reshape(q, [b1, self.num_heads, c, (h1*w1)])
 
         # q = rearrange(q, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
         b1, hc, h1, w1 = k.shape
         # k = paddle.reshape(k, [b1, self.num_heads, -1, h1, w1])
-        k = paddle.reshape(k, [b1, self.num_heads, -1, (h1*w1)])
+        c = hc // self.num_heads
+        k = paddle.reshape(k, [b1, self.num_heads, c, (h1*w1)])
         # k = rearrange(k, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
 
         b1, hc, h1, w1 = v.shape
         # v = paddle.reshape(v, [b1, self.num_heads, -1, h1, w1])
-        v = paddle.reshape(v, [b1, self.num_heads, -1, (h1*w1)])
+        c = hc // self.num_heads
+        v = paddle.reshape(v, [b1, self.num_heads, c, (h1*w1)])
         # v = rearrange(v, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
 
         q = paddle.nn.functional.normalize(q, axis=-1)
