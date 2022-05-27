@@ -1,0 +1,1898 @@
+2022-05-24 11:24:53,923 INFO: 
+  name: GaussianColorDenoising_Restormer
+  model_type: ImageCleanModel
+  scale: 1
+  num_gpu: 8
+  manual_seed: 100
+  datasets:[
+    train:[
+      name: TrainSet
+      type: Dataset_GaussianDenoising
+      sigma_type: random
+      sigma_range: [0, 50]
+      in_ch: 3
+      dataroot_gt: /root/paddlejob/workspace/train_data/datasets/Datasets/train/DFWB
+      dataroot_lq: none
+      geometric_augs: True
+      filename_tmpl: {}
+      io_backend:[
+        type: disk
+      ]
+      use_shuffle: True
+      num_worker_per_gpu: 8
+      batch_size_per_gpu: 8
+      mini_batch_sizes: [8, 5, 4, 2, 1, 1]
+      iters: [184000, 128000, 96000, 72000, 72000, 48000]
+      gt_size: 384
+      gt_sizes: [128, 160, 192, 256, 320, 384]
+      dataset_enlarge_ratio: 1
+      prefetch_mode: None
+      phase: train
+      scale: 1
+    ]
+    val:[
+      name: ValSet
+      type: Dataset_GaussianDenoising
+      sigma_test: 15
+      in_ch: 3
+      dataroot_gt: /root/paddlejob/workspace/train_data/datasets/Datasets/test/CBSD68
+      dataroot_lq: none
+      io_backend:[
+        type: disk
+      ]
+      phase: val
+      scale: 1
+    ]
+  ]
+  network_g:[
+    type: Restormer
+    inp_channels: 3
+    out_channels: 3
+    dim: 48
+    num_blocks: [4, 6, 6, 8]
+    num_refinement_blocks: 4
+    heads: [1, 2, 4, 8]
+    ffn_expansion_factor: 2.66
+    bias: False
+    LayerNorm_type: BiasFree
+    dual_pixel_task: False
+  ]
+  path:[
+    pretrain_network_g: None
+    strict_load_g: True
+    resume_state: None
+    output: /root/paddlejob/workspace/output/
+    root: /root/paddlejob/workspace/code
+    experiments_root: /root/paddlejob/workspace/output/experiments/GaussianColorDenoising_Restormer
+    models: /root/paddlejob/workspace/output/experiments/GaussianColorDenoising_Restormer/models
+    training_states: /root/paddlejob/workspace/output/experiments/GaussianColorDenoising_Restormer/training_states
+    log: /root/paddlejob/workspace/output/experiments/GaussianColorDenoising_Restormer
+    visualization: /root/paddlejob/workspace/output/experiments/GaussianColorDenoising_Restormer/visualization
+  ]
+  train:[
+    total_iter: 600000
+    warmup_iter: -1
+    use_grad_clip: True
+    scheduler:[
+      type: CosineAnnealingRestartCyclicLR
+      learning_rate: 0.00015
+      periods: [184000, 416000]
+      restart_weights: [1, 1]
+      eta_mins: [0.00015, 1e-06]
+    ]
+    mixing_augs:[
+      mixup: True
+      mixup_beta: 1.2
+      use_identity: True
+    ]
+    optim_g:[
+      type: AdamW
+      weight_decay: 0.0001
+      beta1: 0.9
+      beta2: 0.999
+    ]
+    pixel_opt:[
+      type: L1Loss
+      loss_weight: 1
+      reduction: mean
+    ]
+  ]
+  val:[
+    window_size: 8
+    val_freq: 4000.0
+    save_img: False
+    rgb2bgr: True
+    use_image: False
+    max_minibatch: 8
+    metrics:[
+      psnr:[
+        type: calculate_psnr
+        crop_border: 0
+        test_y_channel: False
+      ]
+    ]
+  ]
+  logger:[
+    print_freq: 100
+    save_checkpoint_freq: 4000.0
+    use_tb_logger: False
+    wandb:[
+      project: None
+      resume_id: None
+    ]
+  ]
+  dist_params:[
+    backend: nccl
+    port: 29500
+  ]
+  is_train: True
+  dist: False
+  rank: 0
+  world_size: 4
+
+2022-05-24 11:24:54,394 INFO: Network: DataParallel, with parameters: 26,111,668
+2022-05-24 11:24:54,394 INFO: DataParallel(
+  (_layers): Restormer(
+    (patch_embed): OverlapPatchEmbed(
+      (proj): Conv2D(3, 48, kernel_size=[3, 3], padding=1, data_format=NCHW)
+    )
+    (encoder_level1): Sequential(
+      (0): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(48, 144, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(144, 144, kernel_size=[3, 3], padding=1, groups=144, data_format=NCHW)
+          (project_out): Conv2D(48, 48, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(48, 254, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(254, 254, kernel_size=[3, 3], padding=1, groups=254, data_format=NCHW)
+          (project_out): Conv2D(127, 48, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (1): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(48, 144, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(144, 144, kernel_size=[3, 3], padding=1, groups=144, data_format=NCHW)
+          (project_out): Conv2D(48, 48, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(48, 254, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(254, 254, kernel_size=[3, 3], padding=1, groups=254, data_format=NCHW)
+          (project_out): Conv2D(127, 48, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (2): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(48, 144, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(144, 144, kernel_size=[3, 3], padding=1, groups=144, data_format=NCHW)
+          (project_out): Conv2D(48, 48, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(48, 254, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(254, 254, kernel_size=[3, 3], padding=1, groups=254, data_format=NCHW)
+          (project_out): Conv2D(127, 48, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (3): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(48, 144, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(144, 144, kernel_size=[3, 3], padding=1, groups=144, data_format=NCHW)
+          (project_out): Conv2D(48, 48, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(48, 254, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(254, 254, kernel_size=[3, 3], padding=1, groups=254, data_format=NCHW)
+          (project_out): Conv2D(127, 48, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+    )
+    (down1_2): Downsample(
+      (body): Sequential(
+        (0): Conv2D(48, 24, kernel_size=[3, 3], padding=1, data_format=NCHW)
+        (1): PixelUnshuffle()
+      )
+    )
+    (encoder_level2): Sequential(
+      (0): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (1): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (2): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (3): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (4): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (5): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+    )
+    (down2_3): Downsample(
+      (body): Sequential(
+        (0): Conv2D(96, 48, kernel_size=[3, 3], padding=1, data_format=NCHW)
+        (1): PixelUnshuffle()
+      )
+    )
+    (encoder_level3): Sequential(
+      (0): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (1): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (2): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (3): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (4): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (5): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+    )
+    (down3_4): Downsample(
+      (body): Sequential(
+        (0): Conv2D(192, 96, kernel_size=[3, 3], padding=1, data_format=NCHW)
+        (1): PixelUnshuffle()
+      )
+    )
+    (latent): Sequential(
+      (0): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(384, 1152, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(1152, 1152, kernel_size=[3, 3], padding=1, groups=1152, data_format=NCHW)
+          (project_out): Conv2D(384, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(384, 2042, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(2042, 2042, kernel_size=[3, 3], padding=1, groups=2042, data_format=NCHW)
+          (project_out): Conv2D(1021, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (1): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(384, 1152, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(1152, 1152, kernel_size=[3, 3], padding=1, groups=1152, data_format=NCHW)
+          (project_out): Conv2D(384, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(384, 2042, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(2042, 2042, kernel_size=[3, 3], padding=1, groups=2042, data_format=NCHW)
+          (project_out): Conv2D(1021, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (2): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(384, 1152, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(1152, 1152, kernel_size=[3, 3], padding=1, groups=1152, data_format=NCHW)
+          (project_out): Conv2D(384, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(384, 2042, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(2042, 2042, kernel_size=[3, 3], padding=1, groups=2042, data_format=NCHW)
+          (project_out): Conv2D(1021, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (3): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(384, 1152, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(1152, 1152, kernel_size=[3, 3], padding=1, groups=1152, data_format=NCHW)
+          (project_out): Conv2D(384, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(384, 2042, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(2042, 2042, kernel_size=[3, 3], padding=1, groups=2042, data_format=NCHW)
+          (project_out): Conv2D(1021, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (4): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(384, 1152, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(1152, 1152, kernel_size=[3, 3], padding=1, groups=1152, data_format=NCHW)
+          (project_out): Conv2D(384, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(384, 2042, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(2042, 2042, kernel_size=[3, 3], padding=1, groups=2042, data_format=NCHW)
+          (project_out): Conv2D(1021, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (5): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(384, 1152, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(1152, 1152, kernel_size=[3, 3], padding=1, groups=1152, data_format=NCHW)
+          (project_out): Conv2D(384, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(384, 2042, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(2042, 2042, kernel_size=[3, 3], padding=1, groups=2042, data_format=NCHW)
+          (project_out): Conv2D(1021, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (6): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(384, 1152, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(1152, 1152, kernel_size=[3, 3], padding=1, groups=1152, data_format=NCHW)
+          (project_out): Conv2D(384, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(384, 2042, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(2042, 2042, kernel_size=[3, 3], padding=1, groups=2042, data_format=NCHW)
+          (project_out): Conv2D(1021, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (7): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(384, 1152, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(1152, 1152, kernel_size=[3, 3], padding=1, groups=1152, data_format=NCHW)
+          (project_out): Conv2D(384, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(384, 2042, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(2042, 2042, kernel_size=[3, 3], padding=1, groups=2042, data_format=NCHW)
+          (project_out): Conv2D(1021, 384, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+    )
+    (up4_3): Upsample(
+      (body): Sequential(
+        (0): Conv2D(384, 768, kernel_size=[3, 3], padding=1, data_format=NCHW)
+        (1): PixelShuffle(upscale_factor=2)
+      )
+    )
+    (reduce_chan_level3): Conv2D(384, 192, kernel_size=[1, 1], data_format=NCHW)
+    (decoder_level3): Sequential(
+      (0): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (1): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (2): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (3): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (4): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (5): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(192, 576, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(576, 576, kernel_size=[3, 3], padding=1, groups=576, data_format=NCHW)
+          (project_out): Conv2D(192, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(192, 1020, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(1020, 1020, kernel_size=[3, 3], padding=1, groups=1020, data_format=NCHW)
+          (project_out): Conv2D(510, 192, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+    )
+    (up3_2): Upsample(
+      (body): Sequential(
+        (0): Conv2D(192, 384, kernel_size=[3, 3], padding=1, data_format=NCHW)
+        (1): PixelShuffle(upscale_factor=2)
+      )
+    )
+    (reduce_chan_level2): Conv2D(192, 96, kernel_size=[1, 1], data_format=NCHW)
+    (decoder_level2): Sequential(
+      (0): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (1): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (2): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (3): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (4): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (5): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+    )
+    (up2_1): Upsample(
+      (body): Sequential(
+        (0): Conv2D(96, 192, kernel_size=[3, 3], padding=1, data_format=NCHW)
+        (1): PixelShuffle(upscale_factor=2)
+      )
+    )
+    (decoder_level1): Sequential(
+      (0): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (1): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (2): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (3): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+    )
+    (refinement): Sequential(
+      (0): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (1): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (2): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+      (3): TransformerBlock(
+        (norm1): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (attn): Attention(
+          (qkv): Conv2D(96, 288, kernel_size=[1, 1], data_format=NCHW)
+          (qkv_dwconv): Conv2D(288, 288, kernel_size=[3, 3], padding=1, groups=288, data_format=NCHW)
+          (project_out): Conv2D(96, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+        (norm2): LayerNorm(
+          (body): BiasFree_LayerNorm()
+        )
+        (ffn): FeedForward(
+          (project_in): Conv2D(96, 510, kernel_size=[1, 1], data_format=NCHW)
+          (dwconv): Conv2D(510, 510, kernel_size=[3, 3], padding=1, groups=510, data_format=NCHW)
+          (project_out): Conv2D(255, 96, kernel_size=[1, 1], data_format=NCHW)
+        )
+      )
+    )
+    (output): Conv2D(96, 3, kernel_size=[3, 3], padding=1, data_format=NCHW)
+  )
+)
+2022-05-24 11:24:54,548 INFO: Training statistics:
+	Number of train images: 71580
+	Dataset enlarge ratio: 1
+	Batch size per gpu: 8
+	World size (gpu number): 4
+	Require iter number per epoch: 2236
+	Total epochs: 269; iters: 600000.
+2022-05-24 11:24:54,549 INFO: Number of val images/folders in ValSet: 68
+2022-05-24 11:24:55,808 INFO: Start training from epoch: 210, iter: 469560
+2022-05-24 11:24:57,723 INFO: 
+ Updating Patch_Size to 256 and Batch_Size to 2 
+
+2022-05-24 12:07:07,621 INFO: epoch:210, iter:471100, lr: 0.000033 loss: 0.020728  eta: 2 days, 10:49:36, time (data): 1.644
+2022-05-24 12:09:51,071 INFO: epoch:210, iter:471200, lr: 0.000033 loss: 0.014227  eta: 2 days, 10:45:46, time (data): 1.617
+2022-05-24 12:12:35,177 INFO: epoch:210, iter:471300, lr: 0.000033 loss: 0.014948  eta: 2 days, 10:42:51, time (data): 1.631
+2022-05-24 12:15:19,947 INFO: epoch:210, iter:471400, lr: 0.000033 loss: 0.009976  eta: 2 days, 10:40:44, time (data): 1.660
+2022-05-24 12:18:04,766 INFO: epoch:210, iter:471500, lr: 0.000033 loss: 0.011474  eta: 2 days, 10:38:36, time (data): 1.673
+2022-05-24 12:20:48,218 INFO: epoch:210, iter:471600, lr: 0.000033 loss: 0.014590  eta: 2 days, 10:34:59, time (data): 1.645
+2022-05-24 12:23:32,495 INFO: epoch:210, iter:471700, lr: 0.000033 loss: 0.014965  eta: 2 days, 10:32:16, time (data): 1.643
+2022-05-24 12:26:10,579 INFO: Saving models and training states on epoch 210.
+2022-05-24 12:26:17,882 INFO: Validation ValSet,		 # psnr: 34.3769
+2022-05-24 12:26:25,622 INFO: epoch:211, iter:471800, lr: 0.000033 loss: 0.008576  eta: 2 days, 10:38:00, time (data): 1.638
+2022-05-24 12:29:10,092 INFO: epoch:211, iter:471900, lr: 0.000033 loss: 0.026969  eta: 2 days, 10:35:05, time (data): 1.645
+2022-05-24 12:31:54,457 INFO: epoch:211, iter:472000, lr: 0.000033 loss: 0.007716  eta: 2 days, 10:32:06, time (data): 1.637
+2022-05-24 12:34:38,883 INFO: epoch:211, iter:472100, lr: 0.000033 loss: 0.020898  eta: 2 days, 10:29:11, time (data): 1.667
+2022-05-24 12:37:22,195 INFO: epoch:211, iter:472200, lr: 0.000033 loss: 0.016864  eta: 2 days, 10:25:23, time (data): 1.678
+2022-05-24 12:40:07,095 INFO: epoch:211, iter:472300, lr: 0.000032 loss: 0.012150  eta: 2 days, 10:22:53, time (data): 1.636
+2022-05-24 12:42:51,632 INFO: epoch:211, iter:472400, lr: 0.000032 loss: 0.015507  eta: 2 days, 10:20:07, time (data): 1.663
+2022-05-24 12:45:36,052 INFO: epoch:211, iter:472500, lr: 0.000032 loss: 0.020024  eta: 2 days, 10:17:15, time (data): 1.649
+2022-05-24 12:48:20,479 INFO: epoch:211, iter:472600, lr: 0.000032 loss: 0.008756  eta: 2 days, 10:14:24, time (data): 1.639
+2022-05-24 12:51:04,892 INFO: epoch:211, iter:472700, lr: 0.000032 loss: 0.015341  eta: 2 days, 10:11:33, time (data): 1.638
+2022-05-24 12:53:49,266 INFO: epoch:211, iter:472800, lr: 0.000032 loss: 0.010566  eta: 2 days, 10:08:41, time (data): 1.644
+2022-05-24 12:56:33,372 INFO: epoch:211, iter:472900, lr: 0.000032 loss: 0.007050  eta: 2 days, 10:05:39, time (data): 1.627
+2022-05-24 12:59:17,484 INFO: epoch:211, iter:473000, lr: 0.000032 loss: 0.011259  eta: 2 days, 10:02:38, time (data): 1.646
+2022-05-24 13:02:00,438 INFO: epoch:211, iter:473100, lr: 0.000032 loss: 0.024230  eta: 2 days, 9:58:57, time (data): 1.644
+2022-05-24 13:04:45,486 INFO: epoch:211, iter:473200, lr: 0.000032 loss: 0.016494  eta: 2 days, 9:56:32, time (data): 1.643
+2022-05-24 13:07:29,640 INFO: epoch:211, iter:473300, lr: 0.000032 loss: 0.013164  eta: 2 days, 9:53:36, time (data): 1.640
+2022-05-24 13:10:13,761 INFO: epoch:211, iter:473400, lr: 0.000032 loss: 0.009603  eta: 2 days, 9:50:39, time (data): 1.631
+2022-05-24 13:12:57,948 INFO: epoch:211, iter:473500, lr: 0.000032 loss: 0.015168  eta: 2 days, 9:47:45, time (data): 1.644
+2022-05-24 13:15:42,236 INFO: epoch:211, iter:473600, lr: 0.000032 loss: 0.019377  eta: 2 days, 9:44:54, time (data): 1.625
+2022-05-24 13:18:26,473 INFO: epoch:211, iter:473700, lr: 0.000032 loss: 0.009724  eta: 2 days, 9:42:02, time (data): 1.652
+2022-05-24 13:21:10,927 INFO: epoch:211, iter:473800, lr: 0.000032 loss: 0.019098  eta: 2 days, 9:39:17, time (data): 1.659
+2022-05-24 13:23:55,278 INFO: epoch:211, iter:473900, lr: 0.000032 loss: 0.015950  eta: 2 days, 9:36:30, time (data): 1.655
+2022-05-24 13:26:39,611 INFO: epoch:211, iter:474000, lr: 0.000032 loss: 0.007155  eta: 2 days, 9:33:41, time (data): 1.617
+2022-05-24 13:27:31,540 INFO: Saving models and training states on epoch 211.
+2022-05-24 13:27:39,991 INFO: Validation ValSet,		 # psnr: 34.3771
+2022-05-24 13:29:32,986 INFO: epoch:212, iter:474100, lr: 0.000032 loss: 0.012325  eta: 2 days, 9:35:04, time (data): 1.661
+2022-05-24 13:32:18,902 INFO: epoch:212, iter:474200, lr: 0.000032 loss: 0.015039  eta: 2 days, 9:32:53, time (data): 1.614
+2022-05-24 13:35:03,444 INFO: epoch:212, iter:474300, lr: 0.000032 loss: 0.029131  eta: 2 days, 9:30:05, time (data): 1.646
+2022-05-24 13:37:48,060 INFO: epoch:212, iter:474400, lr: 0.000032 loss: 0.016010  eta: 2 days, 9:27:18, time (data): 1.661
+2022-05-24 13:40:32,670 INFO: epoch:212, iter:474500, lr: 0.000031 loss: 0.021490  eta: 2 days, 9:24:32, time (data): 1.672
+2022-05-24 13:43:17,146 INFO: epoch:212, iter:474600, lr: 0.000031 loss: 0.003181  eta: 2 days, 9:21:42, time (data): 1.642
+2022-05-24 13:46:01,761 INFO: epoch:212, iter:474700, lr: 0.000031 loss: 0.015961  eta: 2 days, 9:18:56, time (data): 1.634
+2022-05-24 13:48:46,595 INFO: epoch:212, iter:474800, lr: 0.000031 loss: 0.014768  eta: 2 days, 9:16:15, time (data): 1.656
+2022-05-24 13:51:31,516 INFO: epoch:212, iter:474900, lr: 0.000031 loss: 0.013355  eta: 2 days, 9:13:36, time (data): 1.647
+2022-05-24 13:54:14,919 INFO: epoch:212, iter:475000, lr: 0.000031 loss: 0.010634  eta: 2 days, 9:10:22, time (data): 1.629
+2022-05-24 13:56:59,303 INFO: epoch:212, iter:475100, lr: 0.000031 loss: 0.009460  eta: 2 days, 9:07:31, time (data): 1.646
+2022-05-24 13:59:43,892 INFO: epoch:212, iter:475200, lr: 0.000031 loss: 0.018546  eta: 2 days, 9:04:45, time (data): 1.642
+2022-05-24 14:02:28,290 INFO: epoch:212, iter:475300, lr: 0.000031 loss: 0.019484  eta: 2 days, 9:01:55, time (data): 1.642
+2022-05-24 14:05:12,794 INFO: epoch:212, iter:475400, lr: 0.000031 loss: 0.013774  eta: 2 days, 8:59:07, time (data): 1.629
+2022-05-24 14:07:57,023 INFO: epoch:212, iter:475500, lr: 0.000031 loss: 0.012799  eta: 2 days, 8:56:14, time (data): 1.646
+2022-05-24 14:10:41,346 INFO: epoch:212, iter:475600, lr: 0.000031 loss: 0.018665  eta: 2 days, 8:53:23, time (data): 1.644
+2022-05-24 14:13:25,571 INFO: epoch:212, iter:475700, lr: 0.000031 loss: 0.017914  eta: 2 days, 8:50:30, time (data): 1.645
+2022-05-24 14:16:09,943 INFO: epoch:212, iter:475800, lr: 0.000031 loss: 0.035738  eta: 2 days, 8:47:40, time (data): 1.638
+2022-05-24 14:18:53,436 INFO: epoch:212, iter:475900, lr: 0.000031 loss: 0.002555  eta: 2 days, 8:44:33, time (data): 1.616
+2022-05-24 14:21:37,772 INFO: epoch:212, iter:476000, lr: 0.000031 loss: 0.014550  eta: 2 days, 8:41:43, time (data): 1.638
+2022-05-24 14:24:22,886 INFO: epoch:212, iter:476100, lr: 0.000031 loss: 0.004127  eta: 2 days, 8:39:08, time (data): 1.641
+2022-05-24 14:27:07,217 INFO: epoch:212, iter:476200, lr: 0.000031 loss: 0.029455  eta: 2 days, 8:36:19, time (data): 1.635
+2022-05-24 14:28:59,121 INFO: Saving models and training states on epoch 212.
+2022-05-24 14:29:08,036 INFO: Validation ValSet,		 # psnr: 34.3793
+2022-05-24 14:29:08,036 INFO: Saving best models and training states on epoch 212.
+2022-05-24 14:30:02,751 INFO: epoch:213, iter:476300, lr: 0.000031 loss: 0.027748  eta: 2 days, 8:36:55, time (data): 1.650
+2022-05-24 14:32:47,212 INFO: epoch:213, iter:476400, lr: 0.000031 loss: 0.015579  eta: 2 days, 8:34:04, time (data): 1.649
+2022-05-24 14:35:31,541 INFO: epoch:213, iter:476500, lr: 0.000031 loss: 0.012200  eta: 2 days, 8:31:12, time (data): 1.646
+2022-05-24 14:38:16,236 INFO: epoch:213, iter:476600, lr: 0.000031 loss: 0.019246  eta: 2 days, 8:28:26, time (data): 1.643
+2022-05-24 14:41:00,742 INFO: epoch:213, iter:476700, lr: 0.000030 loss: 0.005161  eta: 2 days, 8:25:37, time (data): 1.653
+2022-05-24 14:43:45,130 INFO: epoch:213, iter:476800, lr: 0.000030 loss: 0.019254  eta: 2 days, 8:22:46, time (data): 1.620
+2022-05-24 14:46:28,474 INFO: epoch:213, iter:476900, lr: 0.000030 loss: 0.012539  eta: 2 days, 8:19:38, time (data): 1.650
+2022-05-24 14:49:12,913 INFO: epoch:213, iter:477000, lr: 0.000030 loss: 0.021760  eta: 2 days, 8:16:48, time (data): 1.644
+2022-05-24 14:51:57,178 INFO: epoch:213, iter:477100, lr: 0.000030 loss: 0.015126  eta: 2 days, 8:13:56, time (data): 1.641
+2022-05-24 14:54:41,816 INFO: epoch:213, iter:477200, lr: 0.000030 loss: 0.009354  eta: 2 days, 8:11:10, time (data): 1.635
+2022-05-24 14:57:26,235 INFO: epoch:213, iter:477300, lr: 0.000030 loss: 0.015190  eta: 2 days, 8:08:21, time (data): 1.643
+2022-05-24 15:00:10,554 INFO: epoch:213, iter:477400, lr: 0.000030 loss: 0.017597  eta: 2 days, 8:05:30, time (data): 1.643
+2022-05-24 15:02:55,199 INFO: epoch:213, iter:477500, lr: 0.000030 loss: 0.018153  eta: 2 days, 8:02:44, time (data): 1.643
+2022-05-24 15:05:39,869 INFO: epoch:213, iter:477600, lr: 0.000030 loss: 0.010118  eta: 2 days, 7:59:59, time (data): 1.650
+2022-05-24 15:08:24,548 INFO: epoch:213, iter:477700, lr: 0.000030 loss: 0.011572  eta: 2 days, 7:57:14, time (data): 1.641
+2022-05-24 15:11:07,776 INFO: epoch:213, iter:477800, lr: 0.000030 loss: 0.028233  eta: 2 days, 7:54:07, time (data): 1.625
+2022-05-24 15:13:52,597 INFO: epoch:213, iter:477900, lr: 0.000030 loss: 0.027677  eta: 2 days, 7:51:24, time (data): 1.647
+2022-05-24 15:16:36,640 INFO: epoch:213, iter:478000, lr: 0.000030 loss: 0.025474  eta: 2 days, 7:48:30, time (data): 1.637
+2022-05-24 15:19:21,624 INFO: epoch:213, iter:478100, lr: 0.000030 loss: 0.008182  eta: 2 days, 7:45:50, time (data): 1.647
+2022-05-24 15:22:05,929 INFO: epoch:213, iter:478200, lr: 0.000030 loss: 0.007414  eta: 2 days, 7:43:00, time (data): 1.638
+2022-05-24 15:24:51,060 INFO: epoch:213, iter:478300, lr: 0.000030 loss: 0.010362  eta: 2 days, 7:40:21, time (data): 1.663
+2022-05-24 15:27:35,771 INFO: epoch:213, iter:478400, lr: 0.000030 loss: 0.010217  eta: 2 days, 7:37:37, time (data): 1.656
+2022-05-24 15:30:20,015 INFO: epoch:213, iter:478500, lr: 0.000030 loss: 0.012963  eta: 2 days, 7:34:46, time (data): 1.640
+2022-05-24 15:30:26,975 INFO: Saving models and training states on epoch 213.
+2022-05-24 15:30:35,990 INFO: Validation ValSet,		 # psnr: 34.3731
+2022-05-24 15:33:15,200 INFO: epoch:214, iter:478600, lr: 0.000030 loss: 0.010692  eta: 2 days, 7:34:23, time (data): 1.657
+2022-05-24 15:35:59,097 INFO: epoch:214, iter:478700, lr: 0.000030 loss: 0.033258  eta: 2 days, 7:31:26, time (data): 1.657
+2022-05-24 15:38:43,916 INFO: epoch:214, iter:478800, lr: 0.000030 loss: 0.020097  eta: 2 days, 7:28:42, time (data): 1.641
+2022-05-24 15:41:28,929 INFO: epoch:214, iter:478900, lr: 0.000030 loss: 0.023538  eta: 2 days, 7:26:00, time (data): 1.661
+2022-05-24 15:44:13,693 INFO: epoch:214, iter:479000, lr: 0.000029 loss: 0.024174  eta: 2 days, 7:23:15, time (data): 1.639
+2022-05-24 15:46:59,190 INFO: epoch:214, iter:479100, lr: 0.000029 loss: 0.011116  eta: 2 days, 7:20:39, time (data): 1.632
+2022-05-24 15:49:43,689 INFO: epoch:214, iter:479200, lr: 0.000029 loss: 0.012730  eta: 2 days, 7:17:50, time (data): 1.622
+2022-05-24 15:52:28,071 INFO: epoch:214, iter:479300, lr: 0.000029 loss: 0.019520  eta: 2 days, 7:15:00, time (data): 1.648
+2022-05-24 15:55:13,253 INFO: epoch:214, iter:479400, lr: 0.000029 loss: 0.015076  eta: 2 days, 7:12:20, time (data): 1.680
+2022-05-24 15:57:57,513 INFO: epoch:214, iter:479500, lr: 0.000029 loss: 0.017369  eta: 2 days, 7:09:29, time (data): 1.626
+2022-05-24 16:00:41,469 INFO: epoch:214, iter:479600, lr: 0.000029 loss: 0.005213  eta: 2 days, 7:06:34, time (data): 1.624
+2022-05-24 16:03:25,053 INFO: epoch:214, iter:479700, lr: 0.000029 loss: 0.016154  eta: 2 days, 7:03:35, time (data): 1.655
+2022-05-24 16:06:09,639 INFO: epoch:214, iter:479800, lr: 0.000029 loss: 0.009105  eta: 2 days, 7:00:48, time (data): 1.657
+2022-05-24 16:08:54,176 INFO: epoch:214, iter:479900, lr: 0.000029 loss: 0.010472  eta: 2 days, 6:58:01, time (data): 1.645
+2022-05-24 16:11:39,332 INFO: epoch:214, iter:480000, lr: 0.000029 loss: 0.024708  eta: 2 days, 6:55:21, time (data): 1.661
+2022-05-24 16:11:39,335 INFO: 
+ Updating Patch_Size to 320 and Batch_Size to 1 
+
+2022-05-24 16:13:43,819 INFO: epoch:214, iter:480100, lr: 0.000029 loss: 0.015811  eta: 2 days, 6:44:58, time (data): 1.245
+2022-05-24 16:15:47,530 INFO: epoch:214, iter:480200, lr: 0.000029 loss: 0.027655  eta: 2 days, 6:34:35, time (data): 1.208
+2022-05-24 16:17:51,040 INFO: epoch:214, iter:480300, lr: 0.000029 loss: 0.010809  eta: 2 days, 6:24:20, time (data): 1.222
+2022-05-24 16:19:54,321 INFO: epoch:214, iter:480400, lr: 0.000029 loss: 0.011355  eta: 2 days, 6:14:11, time (data): 1.230
+2022-05-24 16:21:57,835 INFO: epoch:214, iter:480500, lr: 0.000029 loss: 0.008092  eta: 2 days, 6:04:14, time (data): 1.227
+2022-05-24 16:24:01,408 INFO: epoch:214, iter:480600, lr: 0.000029 loss: 0.005525  eta: 2 days, 5:54:26, time (data): 1.239
+2022-05-24 16:26:04,790 INFO: epoch:214, iter:480700, lr: 0.000029 loss: 0.010131  eta: 2 days, 5:44:44, time (data): 1.215
+2022-05-24 16:26:53,282 INFO: Saving models and training states on epoch 214.
+2022-05-24 16:27:01,726 INFO: Validation ValSet,		 # psnr: 34.3793
+2022-05-24 16:28:16,926 INFO: epoch:215, iter:480800, lr: 0.000029 loss: 0.017673  eta: 2 days, 5:36:43, time (data): 1.241
+2022-05-24 16:30:21,226 INFO: epoch:215, iter:480900, lr: 0.000029 loss: 0.010609  eta: 2 days, 5:27:26, time (data): 1.266
+2022-05-24 16:32:25,261 INFO: epoch:215, iter:481000, lr: 0.000029 loss: 0.007530  eta: 2 days, 5:18:14, time (data): 1.285
+2022-05-24 16:34:29,030 INFO: epoch:215, iter:481100, lr: 0.000029 loss: 0.014649  eta: 2 days, 5:09:07, time (data): 1.233
+2022-05-24 16:36:32,554 INFO: epoch:215, iter:481200, lr: 0.000029 loss: 0.002576  eta: 2 days, 5:00:04, time (data): 1.212
+2022-05-24 16:38:36,281 INFO: epoch:215, iter:481300, lr: 0.000028 loss: 0.004701  eta: 2 days, 4:51:10, time (data): 1.244
+2022-05-24 16:40:39,719 INFO: epoch:215, iter:481400, lr: 0.000028 loss: 0.012677  eta: 2 days, 4:42:21, time (data): 1.235
+2022-05-24 16:42:43,740 INFO: epoch:215, iter:481500, lr: 0.000028 loss: 0.005046  eta: 2 days, 4:33:44, time (data): 1.242
+2022-05-24 16:44:47,653 INFO: epoch:215, iter:481600, lr: 0.000028 loss: 0.026028  eta: 2 days, 4:25:13, time (data): 1.230
+2022-05-24 16:46:51,482 INFO: epoch:215, iter:481700, lr: 0.000028 loss: 0.010937  eta: 2 days, 4:16:47, time (data): 1.232
+2022-05-24 16:48:54,551 INFO: epoch:215, iter:481800, lr: 0.000028 loss: 0.052615  eta: 2 days, 4:08:20, time (data): 1.224
+2022-05-24 16:50:58,416 INFO: epoch:215, iter:481900, lr: 0.000028 loss: 0.028204  eta: 2 days, 4:00:07, time (data): 1.229
+2022-05-24 16:53:00,439 INFO: epoch:215, iter:482000, lr: 0.000028 loss: 0.034999  eta: 2 days, 3:51:42, time (data): 1.218
+2022-05-24 16:55:04,364 INFO: epoch:215, iter:482100, lr: 0.000028 loss: 0.006666  eta: 2 days, 3:43:41, time (data): 1.253
+2022-05-24 16:57:09,676 INFO: epoch:215, iter:482200, lr: 0.000028 loss: 0.017308  eta: 2 days, 3:35:59, time (data): 1.257
+2022-05-24 16:59:13,541 INFO: epoch:215, iter:482300, lr: 0.000028 loss: 0.014604  eta: 2 days, 3:28:09, time (data): 1.239
+2022-05-24 17:01:17,412 INFO: epoch:215, iter:482400, lr: 0.000028 loss: 0.020487  eta: 2 days, 3:20:24, time (data): 1.251
+2022-05-24 17:03:21,127 INFO: epoch:215, iter:482500, lr: 0.000028 loss: 0.009621  eta: 2 days, 3:12:44, time (data): 1.239
+2022-05-24 17:05:24,858 INFO: epoch:215, iter:482600, lr: 0.000028 loss: 0.015254  eta: 2 days, 3:05:08, time (data): 1.225
+2022-05-24 17:07:28,265 INFO: epoch:215, iter:482700, lr: 0.000028 loss: 0.024928  eta: 2 days, 2:57:35, time (data): 1.249
+2022-05-24 17:09:31,934 INFO: epoch:215, iter:482800, lr: 0.000028 loss: 0.009759  eta: 2 days, 2:50:08, time (data): 1.230
+2022-05-24 17:11:35,826 INFO: epoch:215, iter:482900, lr: 0.000028 loss: 0.010519  eta: 2 days, 2:42:49, time (data): 1.225
+2022-05-24 17:13:10,098 INFO: Saving models and training states on epoch 215.
+2022-05-24 17:13:19,367 INFO: Validation ValSet,		 # psnr: 34.3799
+2022-05-24 17:13:19,367 INFO: Saving best models and training states on epoch 215.
+2022-05-24 17:13:52,587 INFO: epoch:216, iter:483000, lr: 0.000028 loss: 0.014663  eta: 2 days, 2:37:27, time (data): 1.229
+2022-05-24 17:15:56,510 INFO: epoch:216, iter:483100, lr: 0.000028 loss: 0.005029  eta: 2 days, 2:30:16, time (data): 1.232
+2022-05-24 17:17:58,903 INFO: epoch:216, iter:483200, lr: 0.000028 loss: 0.008773  eta: 2 days, 2:22:57, time (data): 1.205
+2022-05-24 17:20:02,096 INFO: epoch:216, iter:483300, lr: 0.000028 loss: 0.022869  eta: 2 days, 2:15:49, time (data): 1.222
+2022-05-24 17:22:05,607 INFO: epoch:216, iter:483400, lr: 0.000028 loss: 0.013980  eta: 2 days, 2:08:48, time (data): 1.277
+2022-05-24 17:24:09,682 INFO: epoch:216, iter:483500, lr: 0.000028 loss: 0.013550  eta: 2 days, 2:01:56, time (data): 1.240
+2022-05-24 17:26:13,365 INFO: epoch:216, iter:483600, lr: 0.000027 loss: 0.013367  eta: 2 days, 1:55:05, time (data): 1.241
+2022-05-24 17:28:17,259 INFO: epoch:216, iter:483700, lr: 0.000027 loss: 0.011002  eta: 2 days, 1:48:20, time (data): 1.252
+2022-05-24 17:30:21,244 INFO: epoch:216, iter:483800, lr: 0.000027 loss: 0.023969  eta: 2 days, 1:41:39, time (data): 1.232
+2022-05-24 17:32:25,107 INFO: epoch:216, iter:483900, lr: 0.000027 loss: 0.027747  eta: 2 days, 1:35:02, time (data): 1.223
+2022-05-24 17:34:28,691 INFO: epoch:216, iter:484000, lr: 0.000027 loss: 0.007161  eta: 2 days, 1:28:26, time (data): 1.256
+2022-05-24 17:36:32,299 INFO: epoch:216, iter:484100, lr: 0.000027 loss: 0.010218  eta: 2 days, 1:21:54, time (data): 1.228
+2022-05-24 17:38:35,818 INFO: epoch:216, iter:484200, lr: 0.000027 loss: 0.004293  eta: 2 days, 1:15:24, time (data): 1.239
+2022-05-24 17:40:39,797 INFO: epoch:216, iter:484300, lr: 0.000027 loss: 0.012088  eta: 2 days, 1:09:03, time (data): 1.234
+2022-05-24 17:42:43,707 INFO: epoch:216, iter:484400, lr: 0.000027 loss: 0.002736  eta: 2 days, 1:02:44, time (data): 1.210
+2022-05-24 17:44:45,838 INFO: epoch:216, iter:484500, lr: 0.000027 loss: 0.021054  eta: 2 days, 0:56:14, time (data): 1.240
+2022-05-24 17:46:49,585 INFO: epoch:216, iter:484600, lr: 0.000027 loss: 0.011143  eta: 2 days, 0:50:01, time (data): 1.226
+2022-05-24 17:48:53,529 INFO: epoch:216, iter:484700, lr: 0.000027 loss: 0.002345  eta: 2 days, 0:43:52, time (data): 1.231
+2022-05-24 17:50:57,388 INFO: epoch:216, iter:484800, lr: 0.000027 loss: 0.015513  eta: 2 days, 0:37:46, time (data): 1.267
+2022-05-24 17:53:01,161 INFO: epoch:216, iter:484900, lr: 0.000027 loss: 0.005248  eta: 2 days, 0:31:43, time (data): 1.253
+2022-05-24 17:55:05,141 INFO: epoch:216, iter:485000, lr: 0.000027 loss: 0.009336  eta: 2 days, 0:25:44, time (data): 1.245
+2022-05-24 17:57:09,119 INFO: epoch:216, iter:485100, lr: 0.000027 loss: 0.017159  eta: 2 days, 0:19:48, time (data): 1.237
+2022-05-24 17:59:12,768 INFO: epoch:216, iter:485200, lr: 0.000027 loss: 0.006746  eta: 2 days, 0:13:53, time (data): 1.235
+2022-05-24 17:59:27,806 INFO: Saving models and training states on epoch 216.
+2022-05-24 17:59:36,856 INFO: Validation ValSet,		 # psnr: 34.3817
+2022-05-24 17:59:36,856 INFO: Saving best models and training states on epoch 216.
+2022-05-24 18:01:29,539 INFO: epoch:217, iter:485300, lr: 0.000027 loss: 0.010588  eta: 2 days, 0:09:36, time (data): 1.253
+2022-05-24 18:03:33,694 INFO: epoch:217, iter:485400, lr: 0.000027 loss: 0.018809  eta: 2 days, 0:03:49, time (data): 1.252
+2022-05-24 18:05:37,391 INFO: epoch:217, iter:485500, lr: 0.000027 loss: 0.024182  eta: 1 day, 23:58:02, time (data): 1.249
+2022-05-24 18:07:40,908 INFO: epoch:217, iter:485600, lr: 0.000027 loss: 0.009101  eta: 1 day, 23:52:17, time (data): 1.244
+2022-05-24 18:09:42,815 INFO: epoch:217, iter:485700, lr: 0.000027 loss: 0.023813  eta: 1 day, 23:46:23, time (data): 1.212
+2022-05-24 18:11:46,719 INFO: epoch:217, iter:485800, lr: 0.000027 loss: 0.006295  eta: 1 day, 23:40:45, time (data): 1.237
+2022-05-24 18:13:51,075 INFO: epoch:217, iter:485900, lr: 0.000026 loss: 0.020730  eta: 1 day, 23:35:14, time (data): 1.244
+2022-05-24 18:15:54,976 INFO: epoch:217, iter:486000, lr: 0.000026 loss: 0.011934  eta: 1 day, 23:29:42, time (data): 1.231
+2022-05-24 18:17:58,973 INFO: epoch:217, iter:486100, lr: 0.000026 loss: 0.014758  eta: 1 day, 23:24:13, time (data): 1.254
+2022-05-24 18:20:02,991 INFO: epoch:217, iter:486200, lr: 0.000026 loss: 0.004501  eta: 1 day, 23:18:47, time (data): 1.239
+2022-05-24 18:22:06,375 INFO: epoch:217, iter:486300, lr: 0.000026 loss: 0.001306  eta: 1 day, 23:13:18, time (data): 1.238
+2022-05-24 18:24:09,992 INFO: epoch:217, iter:486400, lr: 0.000026 loss: 0.010365  eta: 1 day, 23:07:54, time (data): 1.253
+2022-05-24 18:26:13,729 INFO: epoch:217, iter:486500, lr: 0.000026 loss: 0.018446  eta: 1 day, 23:02:33, time (data): 1.244
+2022-05-24 18:28:16,734 INFO: epoch:217, iter:486600, lr: 0.000026 loss: 0.022390  eta: 1 day, 22:57:09, time (data): 1.225
+2022-05-24 18:30:20,134 INFO: epoch:217, iter:486700, lr: 0.000026 loss: 0.008520  eta: 1 day, 22:51:51, time (data): 1.244
+2022-05-24 18:32:23,905 INFO: epoch:217, iter:486800, lr: 0.000026 loss: 0.022226  eta: 1 day, 22:46:37, time (data): 1.232
+2022-05-24 18:34:26,971 INFO: epoch:217, iter:486900, lr: 0.000026 loss: 0.007468  eta: 1 day, 22:41:21, time (data): 1.209
+2022-05-24 18:36:29,895 INFO: epoch:217, iter:487000, lr: 0.000026 loss: 0.026164  eta: 1 day, 22:36:05, time (data): 1.252
+2022-05-24 18:38:34,391 INFO: epoch:217, iter:487100, lr: 0.000026 loss: 0.008097  eta: 1 day, 22:31:03, time (data): 1.257
+2022-05-24 18:40:38,346 INFO: epoch:217, iter:487200, lr: 0.000026 loss: 0.011894  eta: 1 day, 22:25:59, time (data): 1.223
+2022-05-24 18:42:42,522 INFO: epoch:217, iter:487300, lr: 0.000026 loss: 0.014568  eta: 1 day, 22:20:58, time (data): 1.234
+2022-05-24 18:44:46,469 INFO: epoch:217, iter:487400, lr: 0.000026 loss: 0.045130  eta: 1 day, 22:15:58, time (data): 1.218
+2022-05-24 18:45:46,319 INFO: Saving models and training states on epoch 217.
+2022-05-24 18:45:55,381 INFO: Validation ValSet,		 # psnr: 34.3777
+2022-05-24 18:47:00,815 INFO: epoch:218, iter:487500, lr: 0.000026 loss: 0.002079  eta: 1 day, 22:12:04, time (data): 1.237
+2022-05-24 18:49:05,513 INFO: epoch:218, iter:487600, lr: 0.000026 loss: 0.021382  eta: 1 day, 22:07:12, time (data): 1.236
+2022-05-24 18:51:09,239 INFO: epoch:218, iter:487700, lr: 0.000026 loss: 0.023370  eta: 1 day, 22:02:16, time (data): 1.239
+2022-05-24 18:53:13,127 INFO: epoch:218, iter:487800, lr: 0.000026 loss: 0.014385  eta: 1 day, 21:57:23, time (data): 1.227
+2022-05-24 18:55:16,482 INFO: epoch:218, iter:487900, lr: 0.000026 loss: 0.011061  eta: 1 day, 21:52:28, time (data): 1.252
+2022-05-24 18:57:20,799 INFO: epoch:218, iter:488000, lr: 0.000026 loss: 0.012508  eta: 1 day, 21:47:41, time (data): 1.232
+2022-05-24 18:59:25,162 INFO: epoch:218, iter:488100, lr: 0.000026 loss: 0.011933  eta: 1 day, 21:42:56, time (data): 1.233
+2022-05-24 19:01:27,426 INFO: epoch:218, iter:488200, lr: 0.000026 loss: 0.018418  eta: 1 day, 21:38:00, time (data): 1.230
+2022-05-24 19:03:30,982 INFO: epoch:218, iter:488300, lr: 0.000025 loss: 0.014241  eta: 1 day, 21:33:14, time (data): 1.238
+2022-05-24 19:05:34,653 INFO: epoch:218, iter:488400, lr: 0.000025 loss: 0.023646  eta: 1 day, 21:28:30, time (data): 1.211
+2022-05-24 19:07:38,717 INFO: epoch:218, iter:488500, lr: 0.000025 loss: 0.012477  eta: 1 day, 21:23:50, time (data): 1.241
+2022-05-24 19:09:42,572 INFO: epoch:218, iter:488600, lr: 0.000025 loss: 0.021633  eta: 1 day, 21:19:10, time (data): 1.247
+2022-05-24 19:11:46,878 INFO: epoch:218, iter:488700, lr: 0.000025 loss: 0.016235  eta: 1 day, 21:14:35, time (data): 1.237
+2022-05-24 19:13:50,948 INFO: epoch:218, iter:488800, lr: 0.000025 loss: 0.009880  eta: 1 day, 21:10:00, time (data): 1.223
+2022-05-24 19:15:54,866 INFO: epoch:218, iter:488900, lr: 0.000025 loss: 0.015131  eta: 1 day, 21:05:26, time (data): 1.274
+2022-05-24 19:17:59,135 INFO: epoch:218, iter:489000, lr: 0.000025 loss: 0.020084  eta: 1 day, 21:00:55, time (data): 1.246
+2022-05-24 19:20:03,362 INFO: epoch:218, iter:489100, lr: 0.000025 loss: 0.013463  eta: 1 day, 20:56:25, time (data): 1.241
+2022-05-24 19:22:07,454 INFO: epoch:218, iter:489200, lr: 0.000025 loss: 0.007162  eta: 1 day, 20:51:57, time (data): 1.232
+2022-05-24 19:24:11,058 INFO: epoch:218, iter:489300, lr: 0.000025 loss: 0.007658  eta: 1 day, 20:47:27, time (data): 1.240
+2022-05-24 19:26:14,096 INFO: epoch:218, iter:489400, lr: 0.000025 loss: 0.007979  eta: 1 day, 20:42:55, time (data): 1.208
+2022-05-24 19:28:17,140 INFO: epoch:218, iter:489500, lr: 0.000025 loss: 0.028688  eta: 1 day, 20:38:24, time (data): 1.250
+2022-05-24 19:30:20,876 INFO: epoch:218, iter:489600, lr: 0.000025 loss: 0.013956  eta: 1 day, 20:34:00, time (data): 1.218
+2022-05-24 19:32:05,102 INFO: Saving models and training states on epoch 218.
+2022-05-24 19:32:14,420 INFO: Validation ValSet,		 # psnr: 34.3794
+2022-05-24 19:32:35,475 INFO: epoch:219, iter:489700, lr: 0.000025 loss: 0.014756  eta: 1 day, 20:30:35, time (data): 1.235
+2022-05-24 19:34:39,420 INFO: epoch:219, iter:489800, lr: 0.000025 loss: 0.021296  eta: 1 day, 20:26:14, time (data): 1.247
+2022-05-24 19:36:43,011 INFO: epoch:219, iter:489900, lr: 0.000025 loss: 0.007176  eta: 1 day, 20:21:52, time (data): 1.248
+2022-05-24 19:38:47,064 INFO: epoch:219, iter:490000, lr: 0.000025 loss: 0.017189  eta: 1 day, 20:17:34, time (data): 1.239
+2022-05-24 19:40:50,723 INFO: epoch:219, iter:490100, lr: 0.000025 loss: 0.001795  eta: 1 day, 20:13:15, time (data): 1.234
+2022-05-24 19:42:54,651 INFO: epoch:219, iter:490200, lr: 0.000025 loss: 0.041660  eta: 1 day, 20:08:59, time (data): 1.219
+2022-05-24 19:44:58,874 INFO: epoch:219, iter:490300, lr: 0.000025 loss: 0.030538  eta: 1 day, 20:04:46, time (data): 1.237
+2022-05-24 19:47:02,686 INFO: epoch:219, iter:490400, lr: 0.000025 loss: 0.010375  eta: 1 day, 20:00:31, time (data): 1.236
+2022-05-24 19:49:06,493 INFO: epoch:219, iter:490500, lr: 0.000025 loss: 0.009221  eta: 1 day, 19:56:18, time (data): 1.224
+2022-05-24 19:51:09,694 INFO: epoch:219, iter:490600, lr: 0.000025 loss: 0.013794  eta: 1 day, 19:52:03, time (data): 1.252
+2022-05-24 19:53:11,850 INFO: epoch:219, iter:490700, lr: 0.000024 loss: 0.021629  eta: 1 day, 19:47:44, time (data): 1.242
+2022-05-24 19:55:15,314 INFO: epoch:219, iter:490800, lr: 0.000024 loss: 0.009376  eta: 1 day, 19:43:33, time (data): 1.228
+2022-05-24 19:57:18,041 INFO: epoch:219, iter:490900, lr: 0.000024 loss: 0.016521  eta: 1 day, 19:39:19, time (data): 1.242
+2022-05-24 19:59:21,728 INFO: epoch:219, iter:491000, lr: 0.000024 loss: 0.020154  eta: 1 day, 19:35:12, time (data): 1.241
+2022-05-24 20:01:25,410 INFO: epoch:219, iter:491100, lr: 0.000024 loss: 0.007388  eta: 1 day, 19:31:05, time (data): 1.241
+2022-05-24 20:03:29,117 INFO: epoch:219, iter:491200, lr: 0.000024 loss: 0.029338  eta: 1 day, 19:27:00, time (data): 1.252
+2022-05-24 20:05:32,695 INFO: epoch:219, iter:491300, lr: 0.000024 loss: 0.001493  eta: 1 day, 19:22:55, time (data): 1.225
+2022-05-24 20:07:36,892 INFO: epoch:219, iter:491400, lr: 0.000024 loss: 0.006932  eta: 1 day, 19:18:55, time (data): 1.246
+2022-05-24 20:09:40,748 INFO: epoch:219, iter:491500, lr: 0.000024 loss: 0.025807  eta: 1 day, 19:14:54, time (data): 1.242
+2022-05-24 20:11:44,465 INFO: epoch:219, iter:491600, lr: 0.000024 loss: 0.029932  eta: 1 day, 19:10:53, time (data): 1.228
+2022-05-24 20:13:48,737 INFO: epoch:219, iter:491700, lr: 0.000024 loss: 0.010878  eta: 1 day, 19:06:56, time (data): 1.248
+2022-05-24 20:15:52,669 INFO: epoch:219, iter:491800, lr: 0.000024 loss: 0.016039  eta: 1 day, 19:02:58, time (data): 1.250
+2022-05-24 20:17:56,896 INFO: epoch:219, iter:491900, lr: 0.000024 loss: 0.002820  eta: 1 day, 18:59:03, time (data): 1.226
+2022-05-24 20:18:21,672 INFO: Saving models and training states on epoch 219.
+2022-05-24 20:18:30,047 INFO: Validation ValSet,		 # psnr: 34.3810
+2022-05-24 20:20:07,479 INFO: epoch:220, iter:492000, lr: 0.000024 loss: 0.014286  eta: 1 day, 18:55:39, time (data): 1.203
+2022-05-24 20:22:07,917 INFO: epoch:220, iter:492100, lr: 0.000024 loss: 0.018425  eta: 1 day, 18:51:28, time (data): 1.203
+2022-05-24 20:24:08,322 INFO: epoch:220, iter:492200, lr: 0.000024 loss: 0.012726  eta: 1 day, 18:47:17, time (data): 1.203
+2022-05-24 20:26:08,733 INFO: epoch:220, iter:492300, lr: 0.000024 loss: 0.008951  eta: 1 day, 18:43:08, time (data): 1.203
+2022-05-24 20:28:09,152 INFO: epoch:220, iter:492400, lr: 0.000024 loss: 0.009375  eta: 1 day, 18:39:00, time (data): 1.202
+2022-05-24 20:30:09,615 INFO: epoch:220, iter:492500, lr: 0.000024 loss: 0.014519  eta: 1 day, 18:34:53, time (data): 1.203
+2022-05-24 20:32:10,083 INFO: epoch:220, iter:492600, lr: 0.000024 loss: 0.012647  eta: 1 day, 18:30:47, time (data): 1.206
+2022-05-24 20:34:10,508 INFO: epoch:220, iter:492700, lr: 0.000024 loss: 0.016128  eta: 1 day, 18:26:42, time (data): 1.204
+2022-05-24 20:36:10,930 INFO: epoch:220, iter:492800, lr: 0.000024 loss: 0.020729  eta: 1 day, 18:22:38, time (data): 1.204
+2022-05-24 20:38:11,408 INFO: epoch:220, iter:492900, lr: 0.000024 loss: 0.010378  eta: 1 day, 18:18:36, time (data): 1.205
+2022-05-24 20:40:11,889 INFO: epoch:220, iter:493000, lr: 0.000024 loss: 0.017475  eta: 1 day, 18:14:34, time (data): 1.204
+2022-05-24 20:42:12,363 INFO: epoch:220, iter:493100, lr: 0.000024 loss: 0.011594  eta: 1 day, 18:10:34, time (data): 1.208
+2022-05-24 20:44:13,030 INFO: epoch:220, iter:493200, lr: 0.000023 loss: 0.009527  eta: 1 day, 18:06:35, time (data): 1.213
+2022-05-24 20:46:14,582 INFO: epoch:220, iter:493300, lr: 0.000023 loss: 0.023365  eta: 1 day, 18:02:42, time (data): 1.213
+2022-05-24 20:48:16,178 INFO: epoch:220, iter:493400, lr: 0.000023 loss: 0.030108  eta: 1 day, 17:58:49, time (data): 1.210
+2022-05-24 20:50:17,901 INFO: epoch:220, iter:493500, lr: 0.000023 loss: 0.029096  eta: 1 day, 17:54:58, time (data): 1.214
+2022-05-24 20:52:18,964 INFO: epoch:220, iter:493600, lr: 0.000023 loss: 0.013515  eta: 1 day, 17:51:05, time (data): 1.220
+2022-05-24 20:54:19,728 INFO: epoch:220, iter:493700, lr: 0.000023 loss: 0.008685  eta: 1 day, 17:47:12, time (data): 1.205
+2022-05-24 20:56:20,386 INFO: epoch:220, iter:493800, lr: 0.000023 loss: 0.023942  eta: 1 day, 17:43:19, time (data): 1.208
+2022-05-24 20:58:21,059 INFO: epoch:220, iter:493900, lr: 0.000023 loss: 0.029122  eta: 1 day, 17:39:27, time (data): 1.207
+2022-05-24 21:00:21,858 INFO: epoch:220, iter:494000, lr: 0.000023 loss: 0.029104  eta: 1 day, 17:35:37, time (data): 1.205
+2022-05-24 21:02:22,553 INFO: epoch:220, iter:494100, lr: 0.000023 loss: 0.016506  eta: 1 day, 17:31:47, time (data): 1.209
+2022-05-24 21:03:30,274 INFO: Saving models and training states on epoch 220.
+2022-05-24 21:03:38,711 INFO: Validation ValSet,		 # psnr: 34.3803
+2022-05-24 21:04:32,819 INFO: epoch:221, iter:494200, lr: 0.000023 loss: 0.029231  eta: 1 day, 17:28:39, time (data): 1.203
+2022-05-24 21:06:33,647 INFO: epoch:221, iter:494300, lr: 0.000023 loss: 0.013691  eta: 1 day, 17:24:51, time (data): 1.209
+2022-05-24 21:08:34,425 INFO: epoch:221, iter:494400, lr: 0.000023 loss: 0.019657  eta: 1 day, 17:21:04, time (data): 1.209
+2022-05-24 21:10:35,116 INFO: epoch:221, iter:494500, lr: 0.000023 loss: 0.006767  eta: 1 day, 17:17:17, time (data): 1.205
+2022-05-24 21:12:35,779 INFO: epoch:221, iter:494600, lr: 0.000023 loss: 0.005170  eta: 1 day, 17:13:31, time (data): 1.209
+2022-05-24 21:14:36,665 INFO: epoch:221, iter:494700, lr: 0.000023 loss: 0.018474  eta: 1 day, 17:09:46, time (data): 1.207
+2022-05-24 21:16:37,566 INFO: epoch:221, iter:494800, lr: 0.000023 loss: 0.015984  eta: 1 day, 17:06:03, time (data): 1.203
+2022-05-24 21:18:38,111 INFO: epoch:221, iter:494900, lr: 0.000023 loss: 0.008305  eta: 1 day, 17:02:19, time (data): 1.203
+2022-05-24 21:20:39,318 INFO: epoch:221, iter:495000, lr: 0.000023 loss: 0.017995  eta: 1 day, 16:58:39, time (data): 1.207
+2022-05-24 21:22:39,947 INFO: epoch:221, iter:495100, lr: 0.000023 loss: 0.022819  eta: 1 day, 16:54:56, time (data): 1.205
+2022-05-24 21:24:40,536 INFO: epoch:221, iter:495200, lr: 0.000023 loss: 0.012963  eta: 1 day, 16:51:15, time (data): 1.204
+2022-05-24 21:26:41,107 INFO: epoch:221, iter:495300, lr: 0.000023 loss: 0.021684  eta: 1 day, 16:47:34, time (data): 1.209
+2022-05-24 21:28:41,651 INFO: epoch:221, iter:495400, lr: 0.000023 loss: 0.010846  eta: 1 day, 16:43:54, time (data): 1.204
+2022-05-24 21:30:42,234 INFO: epoch:221, iter:495500, lr: 0.000023 loss: 0.011940  eta: 1 day, 16:40:15, time (data): 1.205
+2022-05-24 21:32:42,952 INFO: epoch:221, iter:495600, lr: 0.000023 loss: 0.014231  eta: 1 day, 16:36:37, time (data): 1.206
+2022-05-24 21:34:43,661 INFO: epoch:221, iter:495700, lr: 0.000022 loss: 0.035333  eta: 1 day, 16:33:00, time (data): 1.204
+2022-05-24 21:36:44,265 INFO: epoch:221, iter:495800, lr: 0.000022 loss: 0.005330  eta: 1 day, 16:29:23, time (data): 1.214
+2022-05-24 21:38:44,929 INFO: epoch:221, iter:495900, lr: 0.000022 loss: 0.008520  eta: 1 day, 16:25:47, time (data): 1.208
+2022-05-24 21:40:45,458 INFO: epoch:221, iter:496000, lr: 0.000022 loss: 0.010493  eta: 1 day, 16:22:12, time (data): 1.206
+2022-05-24 21:42:46,012 INFO: epoch:221, iter:496100, lr: 0.000022 loss: 0.009808  eta: 1 day, 16:18:37, time (data): 1.206
+2022-05-24 21:44:46,579 INFO: epoch:221, iter:496200, lr: 0.000022 loss: 0.014705  eta: 1 day, 16:15:03, time (data): 1.207
+2022-05-24 21:46:47,365 INFO: epoch:221, iter:496300, lr: 0.000022 loss: 0.017091  eta: 1 day, 16:11:30, time (data): 1.208
+2022-05-24 21:48:38,597 INFO: Saving models and training states on epoch 221.
+2022-05-24 21:48:47,055 INFO: Validation ValSet,		 # psnr: 34.3828
+2022-05-24 21:48:47,055 INFO: Saving best models and training states on epoch 221.
+2022-05-24 21:49:00,039 INFO: epoch:222, iter:496400, lr: 0.000022 loss: 0.018339  eta: 1 day, 16:08:44, time (data): 1.208
+2022-05-24 21:51:00,718 INFO: epoch:222, iter:496500, lr: 0.000022 loss: 0.011171  eta: 1 day, 16:05:12, time (data): 1.205
+2022-05-24 21:53:01,465 INFO: epoch:222, iter:496600, lr: 0.000022 loss: 0.002746  eta: 1 day, 16:01:41, time (data): 1.206
+2022-05-24 21:55:01,993 INFO: epoch:222, iter:496700, lr: 0.000022 loss: 0.032197  eta: 1 day, 15:58:10, time (data): 1.207
+2022-05-24 21:57:02,692 INFO: epoch:222, iter:496800, lr: 0.000022 loss: 0.002072  eta: 1 day, 15:54:41, time (data): 1.203
+2022-05-24 21:59:03,316 INFO: epoch:222, iter:496900, lr: 0.000022 loss: 0.014895  eta: 1 day, 15:51:11, time (data): 1.204
+2022-05-24 22:01:03,919 INFO: epoch:222, iter:497000, lr: 0.000022 loss: 0.020469  eta: 1 day, 15:47:42, time (data): 1.207
+2022-05-24 22:03:04,660 INFO: epoch:222, iter:497100, lr: 0.000022 loss: 0.010594  eta: 1 day, 15:44:15, time (data): 1.207
+2022-05-24 22:05:05,456 INFO: epoch:222, iter:497200, lr: 0.000022 loss: 0.001522  eta: 1 day, 15:40:48, time (data): 1.209
+2022-05-24 22:07:06,140 INFO: epoch:222, iter:497300, lr: 0.000022 loss: 0.004127  eta: 1 day, 15:37:21, time (data): 1.204
+2022-05-24 22:09:06,763 INFO: epoch:222, iter:497400, lr: 0.000022 loss: 0.018149  eta: 1 day, 15:33:55, time (data): 1.204
+2022-05-24 22:11:07,454 INFO: epoch:222, iter:497500, lr: 0.000022 loss: 0.005569  eta: 1 day, 15:30:30, time (data): 1.204
+2022-05-24 22:13:08,146 INFO: epoch:222, iter:497600, lr: 0.000022 loss: 0.004586  eta: 1 day, 15:27:05, time (data): 1.207
+2022-05-24 22:15:08,841 INFO: epoch:222, iter:497700, lr: 0.000022 loss: 0.017426  eta: 1 day, 15:23:41, time (data): 1.207
+2022-05-24 22:17:09,929 INFO: epoch:222, iter:497800, lr: 0.000022 loss: 0.023700  eta: 1 day, 15:20:19, time (data): 1.207
+2022-05-24 22:19:10,742 INFO: epoch:222, iter:497900, lr: 0.000022 loss: 0.016418  eta: 1 day, 15:16:56, time (data): 1.207
+2022-05-24 22:21:11,657 INFO: epoch:222, iter:498000, lr: 0.000022 loss: 0.008837  eta: 1 day, 15:13:35, time (data): 1.208
+2022-05-24 22:23:12,430 INFO: epoch:222, iter:498100, lr: 0.000022 loss: 0.019147  eta: 1 day, 15:10:13, time (data): 1.205
+2022-05-24 22:25:12,885 INFO: epoch:222, iter:498200, lr: 0.000021 loss: 0.025999  eta: 1 day, 15:06:51, time (data): 1.203
+2022-05-24 22:27:13,432 INFO: epoch:222, iter:498300, lr: 0.000021 loss: 0.007166  eta: 1 day, 15:03:30, time (data): 1.208
+2022-05-24 22:29:14,230 INFO: epoch:222, iter:498400, lr: 0.000021 loss: 0.006568  eta: 1 day, 15:00:10, time (data): 1.208
+2022-05-24 22:31:14,945 INFO: epoch:222, iter:498500, lr: 0.000021 loss: 0.014887  eta: 1 day, 14:56:50, time (data): 1.205
+2022-05-24 22:33:15,719 INFO: epoch:222, iter:498600, lr: 0.000021 loss: 0.015415  eta: 1 day, 14:53:32, time (data): 1.209
+2022-05-24 22:33:49,736 INFO: Saving models and training states on epoch 222.
+2022-05-24 22:33:58,110 INFO: Validation ValSet,		 # psnr: 34.3828
+2022-05-24 22:33:58,110 INFO: Saving best models and training states on epoch 222.
+2022-05-24 22:35:28,096 INFO: epoch:223, iter:498700, lr: 0.000021 loss: 0.006680  eta: 1 day, 14:50:54, time (data): 1.204
+2022-05-24 22:37:28,538 INFO: epoch:223, iter:498800, lr: 0.000021 loss: 0.003553  eta: 1 day, 14:47:35, time (data): 1.205
+2022-05-24 22:39:29,103 INFO: epoch:223, iter:498900, lr: 0.000021 loss: 0.003404  eta: 1 day, 14:44:17, time (data): 1.206
+2022-05-24 22:41:29,777 INFO: epoch:223, iter:499000, lr: 0.000021 loss: 0.035082  eta: 1 day, 14:40:59, time (data): 1.208
+2022-05-24 22:43:30,539 INFO: epoch:223, iter:499100, lr: 0.000021 loss: 0.025943  eta: 1 day, 14:37:43, time (data): 1.206
+2022-05-24 22:45:31,446 INFO: epoch:223, iter:499200, lr: 0.000021 loss: 0.013389  eta: 1 day, 14:34:28, time (data): 1.205
+2022-05-24 22:47:32,168 INFO: epoch:223, iter:499300, lr: 0.000021 loss: 0.019588  eta: 1 day, 14:31:12, time (data): 1.213
+2022-05-24 22:49:32,953 INFO: epoch:223, iter:499400, lr: 0.000021 loss: 0.006364  eta: 1 day, 14:27:57, time (data): 1.206
+2022-05-24 22:51:33,610 INFO: epoch:223, iter:499500, lr: 0.000021 loss: 0.011545  eta: 1 day, 14:24:43, time (data): 1.206
+2022-05-24 22:53:34,209 INFO: epoch:223, iter:499600, lr: 0.000021 loss: 0.003089  eta: 1 day, 14:21:28, time (data): 1.206
+2022-05-24 22:55:34,790 INFO: epoch:223, iter:499700, lr: 0.000021 loss: 0.006845  eta: 1 day, 14:18:14, time (data): 1.208
+2022-05-24 22:57:35,540 INFO: epoch:223, iter:499800, lr: 0.000021 loss: 0.024327  eta: 1 day, 14:15:01, time (data): 1.209
+2022-05-24 22:59:36,241 INFO: epoch:223, iter:499900, lr: 0.000021 loss: 0.005063  eta: 1 day, 14:11:49, time (data): 1.208
+2022-05-24 23:01:36,992 INFO: epoch:223, iter:500000, lr: 0.000021 loss: 0.007470  eta: 1 day, 14:08:37, time (data): 1.206
+2022-05-24 23:03:37,815 INFO: epoch:223, iter:500100, lr: 0.000021 loss: 0.004906  eta: 1 day, 14:05:26, time (data): 1.208
+2022-05-24 23:05:38,504 INFO: epoch:223, iter:500200, lr: 0.000021 loss: 0.005290  eta: 1 day, 14:02:14, time (data): 1.209
+2022-05-24 23:07:39,432 INFO: epoch:223, iter:500300, lr: 0.000021 loss: 0.008780  eta: 1 day, 13:59:04, time (data): 1.209
+2022-05-24 23:09:40,035 INFO: epoch:223, iter:500400, lr: 0.000021 loss: 0.010049  eta: 1 day, 13:55:54, time (data): 1.204
+2022-05-24 23:11:40,520 INFO: epoch:223, iter:500500, lr: 0.000021 loss: 0.009081  eta: 1 day, 13:52:43, time (data): 1.208
+2022-05-24 23:13:40,760 INFO: epoch:223, iter:500600, lr: 0.000021 loss: 0.020651  eta: 1 day, 13:49:32, time (data): 1.198
+2022-05-24 23:15:41,243 INFO: epoch:223, iter:500700, lr: 0.000021 loss: 0.025742  eta: 1 day, 13:46:23, time (data): 1.206
+2022-05-24 23:17:41,730 INFO: epoch:223, iter:500800, lr: 0.000020 loss: 0.020988  eta: 1 day, 13:43:13, time (data): 1.205
+2022-05-24 23:18:58,837 INFO: Saving models and training states on epoch 223.
+2022-05-24 23:19:07,226 INFO: Validation ValSet,		 # psnr: 34.3825
+2022-05-24 23:19:51,473 INFO: epoch:224, iter:500900, lr: 0.000020 loss: 0.015960  eta: 1 day, 13:40:34, time (data): 1.204
+2022-05-24 23:21:51,683 INFO: epoch:224, iter:501000, lr: 0.000020 loss: 0.016563  eta: 1 day, 13:37:25, time (data): 1.204
+2022-05-24 23:23:51,977 INFO: epoch:224, iter:501100, lr: 0.000020 loss: 0.005535  eta: 1 day, 13:34:16, time (data): 1.203
+2022-05-24 23:25:52,361 INFO: epoch:224, iter:501200, lr: 0.000020 loss: 0.027067  eta: 1 day, 13:31:08, time (data): 1.206
+2022-05-24 23:27:52,723 INFO: epoch:224, iter:501300, lr: 0.000020 loss: 0.017697  eta: 1 day, 13:28:01, time (data): 1.206
+2022-05-24 23:29:53,187 INFO: epoch:224, iter:501400, lr: 0.000020 loss: 0.006252  eta: 1 day, 13:24:54, time (data): 1.206
+2022-05-24 23:31:54,010 INFO: epoch:224, iter:501500, lr: 0.000020 loss: 0.007166  eta: 1 day, 13:21:48, time (data): 1.210
+2022-05-24 23:33:54,815 INFO: epoch:224, iter:501600, lr: 0.000020 loss: 0.018830  eta: 1 day, 13:18:43, time (data): 1.211
+2022-05-24 23:35:55,620 INFO: epoch:224, iter:501700, lr: 0.000020 loss: 0.003149  eta: 1 day, 13:15:39, time (data): 1.206
+2022-05-24 23:37:56,381 INFO: epoch:224, iter:501800, lr: 0.000020 loss: 0.024619  eta: 1 day, 13:12:35, time (data): 1.211
+2022-05-24 23:39:56,999 INFO: epoch:224, iter:501900, lr: 0.000020 loss: 0.038598  eta: 1 day, 13:09:30, time (data): 1.205
+2022-05-24 23:41:57,624 INFO: epoch:224, iter:502000, lr: 0.000020 loss: 0.012090  eta: 1 day, 13:06:26, time (data): 1.206
+2022-05-24 23:43:58,262 INFO: epoch:224, iter:502100, lr: 0.000020 loss: 0.009271  eta: 1 day, 13:03:23, time (data): 1.202
+2022-05-24 23:45:58,917 INFO: epoch:224, iter:502200, lr: 0.000020 loss: 0.039972  eta: 1 day, 13:00:20, time (data): 1.208
+2022-05-24 23:47:59,481 INFO: epoch:224, iter:502300, lr: 0.000020 loss: 0.007638  eta: 1 day, 12:57:17, time (data): 1.203
+2022-05-24 23:49:59,967 INFO: epoch:224, iter:502400, lr: 0.000020 loss: 0.008287  eta: 1 day, 12:54:14, time (data): 1.204
+2022-05-24 23:52:00,410 INFO: epoch:224, iter:502500, lr: 0.000020 loss: 0.009783  eta: 1 day, 12:51:12, time (data): 1.208
+2022-05-24 23:54:00,914 INFO: epoch:224, iter:502600, lr: 0.000020 loss: 0.003427  eta: 1 day, 12:48:10, time (data): 1.206
+2022-05-24 23:56:01,361 INFO: epoch:224, iter:502700, lr: 0.000020 loss: 0.030189  eta: 1 day, 12:45:08, time (data): 1.203
+2022-05-24 23:58:01,807 INFO: epoch:224, iter:502800, lr: 0.000020 loss: 0.016450  eta: 1 day, 12:42:07, time (data): 1.203
+2022-05-25 00:00:02,425 INFO: epoch:224, iter:502900, lr: 0.000020 loss: 0.007719  eta: 1 day, 12:39:06, time (data): 1.206
+2022-05-25 00:02:03,098 INFO: epoch:224, iter:503000, lr: 0.000020 loss: 0.005779  eta: 1 day, 12:36:06, time (data): 1.205
+2022-05-25 00:04:03,804 INFO: epoch:224, iter:503100, lr: 0.000020 loss: 0.007623  eta: 1 day, 12:33:06, time (data): 1.199
+2022-05-25 00:04:04,035 INFO: Saving models and training states on epoch 224.
+2022-05-25 00:04:12,491 INFO: Validation ValSet,		 # psnr: 34.3817
+2022-05-25 00:06:14,018 INFO: epoch:225, iter:503200, lr: 0.000020 loss: 0.009137  eta: 1 day, 12:30:35, time (data): 1.205
+2022-05-25 00:08:14,420 INFO: epoch:225, iter:503300, lr: 0.000020 loss: 0.011557  eta: 1 day, 12:27:35, time (data): 1.200
+2022-05-25 00:10:14,705 INFO: epoch:225, iter:503400, lr: 0.000020 loss: 0.018350  eta: 1 day, 12:24:35, time (data): 1.203
+2022-05-25 00:12:15,702 INFO: epoch:225, iter:503500, lr: 0.000019 loss: 0.001118  eta: 1 day, 12:21:37, time (data): 1.204
+2022-05-25 00:14:16,418 INFO: epoch:225, iter:503600, lr: 0.000019 loss: 0.028802  eta: 1 day, 12:18:39, time (data): 1.209
+2022-05-25 00:16:17,155 INFO: epoch:225, iter:503700, lr: 0.000019 loss: 0.017289  eta: 1 day, 12:15:42, time (data): 1.205
+2022-05-25 00:18:17,862 INFO: epoch:225, iter:503800, lr: 0.000019 loss: 0.008461  eta: 1 day, 12:12:45, time (data): 1.205
+2022-05-25 00:20:18,623 INFO: epoch:225, iter:503900, lr: 0.000019 loss: 0.030328  eta: 1 day, 12:09:48, time (data): 1.206
+2022-05-25 00:22:19,426 INFO: epoch:225, iter:504000, lr: 0.000019 loss: 0.010777  eta: 1 day, 12:06:51, time (data): 1.205
+2022-05-25 00:24:20,238 INFO: epoch:225, iter:504100, lr: 0.000019 loss: 0.017063  eta: 1 day, 12:03:55, time (data): 1.244
+2022-05-25 00:26:20,775 INFO: epoch:225, iter:504200, lr: 0.000019 loss: 0.001363  eta: 1 day, 12:00:59, time (data): 1.198
+2022-05-25 00:28:21,506 INFO: epoch:225, iter:504300, lr: 0.000019 loss: 0.010943  eta: 1 day, 11:58:03, time (data): 1.209
+2022-05-25 00:30:22,241 INFO: epoch:225, iter:504400, lr: 0.000019 loss: 0.012179  eta: 1 day, 11:55:08, time (data): 1.205
+2022-05-25 00:32:22,958 INFO: epoch:225, iter:504500, lr: 0.000019 loss: 0.012591  eta: 1 day, 11:52:13, time (data): 1.205
+2022-05-25 00:34:23,697 INFO: epoch:225, iter:504600, lr: 0.000019 loss: 0.011374  eta: 1 day, 11:49:18, time (data): 1.207
+2022-05-25 00:36:24,317 INFO: epoch:225, iter:504700, lr: 0.000019 loss: 0.005786  eta: 1 day, 11:46:24, time (data): 1.205
+2022-05-25 00:38:24,856 INFO: epoch:225, iter:504800, lr: 0.000019 loss: 0.015359  eta: 1 day, 11:43:29, time (data): 1.204
+2022-05-25 00:40:25,372 INFO: epoch:225, iter:504900, lr: 0.000019 loss: 0.006458  eta: 1 day, 11:40:35, time (data): 1.204
+2022-05-25 00:42:26,036 INFO: epoch:225, iter:505000, lr: 0.000019 loss: 0.019429  eta: 1 day, 11:37:41, time (data): 1.203
+2022-05-25 00:44:26,636 INFO: epoch:225, iter:505100, lr: 0.000019 loss: 0.020077  eta: 1 day, 11:34:48, time (data): 1.204
+2022-05-25 00:46:27,318 INFO: epoch:225, iter:505200, lr: 0.000019 loss: 0.006123  eta: 1 day, 11:31:55, time (data): 1.206
+2022-05-25 00:48:27,885 INFO: epoch:225, iter:505300, lr: 0.000019 loss: 0.012689  eta: 1 day, 11:29:02, time (data): 1.206
+2022-05-25 00:49:11,453 INFO: Saving models and training states on epoch 225.
+2022-05-25 00:49:19,883 INFO: Validation ValSet,		 # psnr: 34.3831
+2022-05-25 00:49:19,883 INFO: Saving best models and training states on epoch 225.
+2022-05-25 00:50:40,447 INFO: epoch:226, iter:505400, lr: 0.000019 loss: 0.006912  eta: 1 day, 11:26:41, time (data): 1.206
+2022-05-25 00:52:41,099 INFO: epoch:226, iter:505500, lr: 0.000019 loss: 0.018584  eta: 1 day, 11:23:48, time (data): 1.208
+2022-05-25 00:54:41,774 INFO: epoch:226, iter:505600, lr: 0.000019 loss: 0.014289  eta: 1 day, 11:20:56, time (data): 1.210
+2022-05-25 00:56:42,670 INFO: epoch:226, iter:505700, lr: 0.000019 loss: 0.016502  eta: 1 day, 11:18:05, time (data): 1.206
+2022-05-25 00:58:43,384 INFO: epoch:226, iter:505800, lr: 0.000019 loss: 0.013596  eta: 1 day, 11:15:14, time (data): 1.208
+2022-05-25 01:00:44,121 INFO: epoch:226, iter:505900, lr: 0.000019 loss: 0.015497  eta: 1 day, 11:12:23, time (data): 1.208
+2022-05-25 01:02:45,034 INFO: epoch:226, iter:506000, lr: 0.000019 loss: 0.010651  eta: 1 day, 11:09:33, time (data): 1.207
+2022-05-25 01:04:46,878 INFO: epoch:226, iter:506100, lr: 0.000019 loss: 0.005224  eta: 1 day, 11:06:45, time (data): 1.232
+2022-05-25 01:06:47,930 INFO: epoch:226, iter:506200, lr: 0.000018 loss: 0.024425  eta: 1 day, 11:03:56, time (data): 1.208
+2022-05-25 01:08:48,785 INFO: epoch:226, iter:506300, lr: 0.000018 loss: 0.050812  eta: 1 day, 11:01:06, time (data): 1.203
+2022-05-25 01:10:49,392 INFO: epoch:226, iter:506400, lr: 0.000018 loss: 0.021094  eta: 1 day, 10:58:16, time (data): 1.207
+2022-05-25 01:12:49,939 INFO: epoch:226, iter:506500, lr: 0.000018 loss: 0.028960  eta: 1 day, 10:55:27, time (data): 1.208
+2022-05-25 01:14:50,523 INFO: epoch:226, iter:506600, lr: 0.000018 loss: 0.039371  eta: 1 day, 10:52:37, time (data): 1.207
+2022-05-25 01:16:51,154 INFO: epoch:226, iter:506700, lr: 0.000018 loss: 0.012296  eta: 1 day, 10:49:48, time (data): 1.203
+2022-05-25 01:18:51,645 INFO: epoch:226, iter:506800, lr: 0.000018 loss: 0.005518  eta: 1 day, 10:46:59, time (data): 1.203
+2022-05-25 01:20:52,106 INFO: epoch:226, iter:506900, lr: 0.000018 loss: 0.019209  eta: 1 day, 10:44:10, time (data): 1.205
+2022-05-25 01:22:52,787 INFO: epoch:226, iter:507000, lr: 0.000018 loss: 0.015143  eta: 1 day, 10:41:22, time (data): 1.205
+2022-05-25 01:24:53,301 INFO: epoch:226, iter:507100, lr: 0.000018 loss: 0.002725  eta: 1 day, 10:38:33, time (data): 1.205
+2022-05-25 01:26:53,999 INFO: epoch:226, iter:507200, lr: 0.000018 loss: 0.011006  eta: 1 day, 10:35:46, time (data): 1.206
+2022-05-25 01:28:54,611 INFO: epoch:226, iter:507300, lr: 0.000018 loss: 0.031540  eta: 1 day, 10:32:58, time (data): 1.206
+2022-05-25 01:30:55,362 INFO: epoch:226, iter:507400, lr: 0.000018 loss: 0.021933  eta: 1 day, 10:30:11, time (data): 1.210
+2022-05-25 01:32:55,924 INFO: epoch:226, iter:507500, lr: 0.000018 loss: 0.021119  eta: 1 day, 10:27:24, time (data): 1.203
+2022-05-25 01:34:22,757 INFO: Saving models and training states on epoch 226.
+2022-05-25 01:34:31,122 INFO: Validation ValSet,		 # psnr: 34.3817
+2022-05-25 01:35:05,992 INFO: epoch:227, iter:507600, lr: 0.000018 loss: 0.017883  eta: 1 day, 10:25:00, time (data): 1.204
+2022-05-25 01:37:06,467 INFO: epoch:227, iter:507700, lr: 0.000018 loss: 0.006712  eta: 1 day, 10:22:13, time (data): 1.202
+2022-05-25 01:39:07,130 INFO: epoch:227, iter:507800, lr: 0.000018 loss: 0.023446  eta: 1 day, 10:19:26, time (data): 1.207
+2022-05-25 01:41:07,862 INFO: epoch:227, iter:507900, lr: 0.000018 loss: 0.008026  eta: 1 day, 10:16:40, time (data): 1.204
+2022-05-25 01:43:08,506 INFO: epoch:227, iter:508000, lr: 0.000018 loss: 0.008204  eta: 1 day, 10:13:55, time (data): 1.207
+2022-05-25 01:45:09,099 INFO: epoch:227, iter:508100, lr: 0.000018 loss: 0.022000  eta: 1 day, 10:11:09, time (data): 1.205
+2022-05-25 01:47:09,721 INFO: epoch:227, iter:508200, lr: 0.000018 loss: 0.019849  eta: 1 day, 10:08:23, time (data): 1.206
+2022-05-25 01:49:10,352 INFO: epoch:227, iter:508300, lr: 0.000018 loss: 0.027672  eta: 1 day, 10:05:38, time (data): 1.207
+2022-05-25 01:51:10,968 INFO: epoch:227, iter:508400, lr: 0.000018 loss: 0.022344  eta: 1 day, 10:02:53, time (data): 1.203
+2022-05-25 01:53:11,288 INFO: epoch:227, iter:508500, lr: 0.000018 loss: 0.006885  eta: 1 day, 10:00:07, time (data): 1.203
+2022-05-25 01:55:11,757 INFO: epoch:227, iter:508600, lr: 0.000018 loss: 0.007626  eta: 1 day, 9:57:22, time (data): 1.204
+2022-05-25 01:57:12,484 INFO: epoch:227, iter:508700, lr: 0.000018 loss: 0.011791  eta: 1 day, 9:54:38, time (data): 1.203
+2022-05-25 01:59:13,113 INFO: epoch:227, iter:508800, lr: 0.000018 loss: 0.012306  eta: 1 day, 9:51:54, time (data): 1.207
+2022-05-25 02:01:13,821 INFO: epoch:227, iter:508900, lr: 0.000018 loss: 0.010970  eta: 1 day, 9:49:10, time (data): 1.208
+2022-05-25 02:03:14,462 INFO: epoch:227, iter:509000, lr: 0.000017 loss: 0.023007  eta: 1 day, 9:46:27, time (data): 1.220
+2022-05-25 02:05:15,285 INFO: epoch:227, iter:509100, lr: 0.000017 loss: 0.003893  eta: 1 day, 9:43:44, time (data): 1.203
+2022-05-25 02:07:16,075 INFO: epoch:227, iter:509200, lr: 0.000017 loss: 0.011748  eta: 1 day, 9:41:01, time (data): 1.213
+2022-05-25 02:09:16,861 INFO: epoch:227, iter:509300, lr: 0.000017 loss: 0.040240  eta: 1 day, 9:38:18, time (data): 1.205
+2022-05-25 02:11:17,643 INFO: epoch:227, iter:509400, lr: 0.000017 loss: 0.001600  eta: 1 day, 9:35:36, time (data): 1.210
+2022-05-25 02:13:18,276 INFO: epoch:227, iter:509500, lr: 0.000017 loss: 0.000434  eta: 1 day, 9:32:53, time (data): 1.207
+2022-05-25 02:15:18,895 INFO: epoch:227, iter:509600, lr: 0.000017 loss: 0.007224  eta: 1 day, 9:30:11, time (data): 1.207
+2022-05-25 02:17:19,568 INFO: epoch:227, iter:509700, lr: 0.000017 loss: 0.026588  eta: 1 day, 9:27:29, time (data): 1.208
+2022-05-25 02:19:20,333 INFO: epoch:227, iter:509800, lr: 0.000017 loss: 0.005589  eta: 1 day, 9:24:47, time (data): 1.208
+2022-05-25 02:19:30,133 INFO: Saving models and training states on epoch 227.
+2022-05-25 02:19:38,549 INFO: Validation ValSet,		 # psnr: 34.3831
+2022-05-25 02:21:30,472 INFO: epoch:228, iter:509900, lr: 0.000017 loss: 0.027208  eta: 1 day, 9:22:26, time (data): 1.206
+2022-05-25 02:23:30,983 INFO: epoch:228, iter:510000, lr: 0.000017 loss: 0.010669  eta: 1 day, 9:19:44, time (data): 1.206
+2022-05-25 02:25:31,634 INFO: epoch:228, iter:510100, lr: 0.000017 loss: 0.008539  eta: 1 day, 9:17:03, time (data): 1.206
+2022-05-25 02:27:32,263 INFO: epoch:228, iter:510200, lr: 0.000017 loss: 0.024423  eta: 1 day, 9:14:22, time (data): 1.206
+2022-05-25 02:29:32,839 INFO: epoch:228, iter:510300, lr: 0.000017 loss: 0.011350  eta: 1 day, 9:11:41, time (data): 1.207
+2022-05-25 02:31:33,517 INFO: epoch:228, iter:510400, lr: 0.000017 loss: 0.005263  eta: 1 day, 9:09:00, time (data): 1.204
+2022-05-25 02:33:34,126 INFO: epoch:228, iter:510500, lr: 0.000017 loss: 0.017277  eta: 1 day, 9:06:19, time (data): 1.205
+2022-05-25 02:35:34,704 INFO: epoch:228, iter:510600, lr: 0.000017 loss: 0.012362  eta: 1 day, 9:03:39, time (data): 1.205
+2022-05-25 02:37:35,254 INFO: epoch:228, iter:510700, lr: 0.000017 loss: 0.008623  eta: 1 day, 9:00:58, time (data): 1.208
+2022-05-25 02:39:35,864 INFO: epoch:228, iter:510800, lr: 0.000017 loss: 0.008220  eta: 1 day, 8:58:18, time (data): 1.248
+2022-05-25 02:41:36,502 INFO: epoch:228, iter:510900, lr: 0.000017 loss: 0.013778  eta: 1 day, 8:55:38, time (data): 1.203
+2022-05-25 02:43:37,220 INFO: epoch:228, iter:511000, lr: 0.000017 loss: 0.025077  eta: 1 day, 8:52:59, time (data): 1.209
+2022-05-25 02:45:37,826 INFO: epoch:228, iter:511100, lr: 0.000017 loss: 0.011988  eta: 1 day, 8:50:19, time (data): 1.206
+2022-05-25 02:47:38,487 INFO: epoch:228, iter:511200, lr: 0.000017 loss: 0.009402  eta: 1 day, 8:47:40, time (data): 1.206
+2022-05-25 02:49:38,878 INFO: epoch:228, iter:511300, lr: 0.000017 loss: 0.009093  eta: 1 day, 8:45:00, time (data): 1.200
+2022-05-25 02:51:39,310 INFO: epoch:228, iter:511400, lr: 0.000017 loss: 0.002492  eta: 1 day, 8:42:21, time (data): 1.207
+2022-05-25 02:53:39,875 INFO: epoch:228, iter:511500, lr: 0.000017 loss: 0.022730  eta: 1 day, 8:39:42, time (data): 1.204
+2022-05-25 02:55:40,595 INFO: epoch:228, iter:511600, lr: 0.000017 loss: 0.017349  eta: 1 day, 8:37:04, time (data): 1.206
+2022-05-25 02:57:41,285 INFO: epoch:228, iter:511700, lr: 0.000017 loss: 0.027763  eta: 1 day, 8:34:25, time (data): 1.209
+2022-05-25 02:59:41,932 INFO: epoch:228, iter:511800, lr: 0.000017 loss: 0.033725  eta: 1 day, 8:31:47, time (data): 1.205
+2022-05-25 03:01:42,762 INFO: epoch:228, iter:511900, lr: 0.000016 loss: 0.004052  eta: 1 day, 8:29:09, time (data): 1.211
+2022-05-25 03:03:43,409 INFO: epoch:228, iter:512000, lr: 0.000016 loss: 0.012072  eta: 1 day, 8:26:32, time (data): 1.201
+2022-05-25 03:04:36,677 INFO: Saving models and training states on epoch 228.
+2022-05-25 03:04:45,304 INFO: Validation ValSet,		 # psnr: 34.3839
+2022-05-25 03:04:45,304 INFO: Saving best models and training states on epoch 228.
+2022-05-25 03:05:56,314 INFO: epoch:229, iter:512100, lr: 0.000016 loss: 0.048282  eta: 1 day, 8:24:19, time (data): 1.202
+2022-05-25 03:07:56,723 INFO: epoch:229, iter:512200, lr: 0.000016 loss: 0.022556  eta: 1 day, 8:21:41, time (data): 1.203
+2022-05-25 03:09:57,012 INFO: epoch:229, iter:512300, lr: 0.000016 loss: 0.016116  eta: 1 day, 8:19:03, time (data): 1.203
+2022-05-25 03:11:57,587 INFO: epoch:229, iter:512400, lr: 0.000016 loss: 0.009653  eta: 1 day, 8:16:26, time (data): 1.200
+2022-05-25 03:13:58,048 INFO: epoch:229, iter:512500, lr: 0.000016 loss: 0.020755  eta: 1 day, 8:13:48, time (data): 1.204
+2022-05-25 03:15:58,481 INFO: epoch:229, iter:512600, lr: 0.000016 loss: 0.009851  eta: 1 day, 8:11:11, time (data): 1.205
+2022-05-25 03:17:59,032 INFO: epoch:229, iter:512700, lr: 0.000016 loss: 0.006868  eta: 1 day, 8:08:34, time (data): 1.202
+2022-05-25 03:19:59,528 INFO: epoch:229, iter:512800, lr: 0.000016 loss: 0.025088  eta: 1 day, 8:05:57, time (data): 1.204
+2022-05-25 03:21:59,910 INFO: epoch:229, iter:512900, lr: 0.000016 loss: 0.004813  eta: 1 day, 8:03:20, time (data): 1.206
+2022-05-25 03:24:00,400 INFO: epoch:229, iter:513000, lr: 0.000016 loss: 0.031586  eta: 1 day, 8:00:44, time (data): 1.206
+2022-05-25 03:26:00,822 INFO: epoch:229, iter:513100, lr: 0.000016 loss: 0.005448  eta: 1 day, 7:58:07, time (data): 1.204
+2022-05-25 03:28:01,251 INFO: epoch:229, iter:513200, lr: 0.000016 loss: 0.001957  eta: 1 day, 7:55:31, time (data): 1.207
+2022-05-25 03:30:02,026 INFO: epoch:229, iter:513300, lr: 0.000016 loss: 0.012802  eta: 1 day, 7:52:55, time (data): 1.211
+2022-05-25 03:32:02,578 INFO: epoch:229, iter:513400, lr: 0.000016 loss: 0.022753  eta: 1 day, 7:50:20, time (data): 1.203
+2022-05-25 03:34:03,279 INFO: epoch:229, iter:513500, lr: 0.000016 loss: 0.006909  eta: 1 day, 7:47:44, time (data): 1.204
+2022-05-25 03:36:03,878 INFO: epoch:229, iter:513600, lr: 0.000016 loss: 0.000073  eta: 1 day, 7:45:09, time (data): 1.205
+2022-05-25 03:38:04,286 INFO: epoch:229, iter:513700, lr: 0.000016 loss: 0.027974  eta: 1 day, 7:42:33, time (data): 1.201
+2022-05-25 03:40:04,843 INFO: epoch:229, iter:513800, lr: 0.000016 loss: 0.032701  eta: 1 day, 7:39:58, time (data): 1.209
+2022-05-25 03:42:05,387 INFO: epoch:229, iter:513900, lr: 0.000016 loss: 0.010958  eta: 1 day, 7:37:23, time (data): 1.204
+2022-05-25 03:44:05,914 INFO: epoch:229, iter:514000, lr: 0.000016 loss: 0.010163  eta: 1 day, 7:34:48, time (data): 1.203
+2022-05-25 03:46:06,752 INFO: epoch:229, iter:514100, lr: 0.000016 loss: 0.010046  eta: 1 day, 7:32:14, time (data): 1.207
+2022-05-25 03:48:07,387 INFO: epoch:229, iter:514200, lr: 0.000016 loss: 0.015872  eta: 1 day, 7:29:40, time (data): 1.204
+2022-05-25 03:49:44,015 INFO: Saving models and training states on epoch 229.
+2022-05-25 03:49:52,513 INFO: Validation ValSet,		 # psnr: 34.3849
+2022-05-25 03:49:52,513 INFO: Saving best models and training states on epoch 229.
+2022-05-25 03:50:20,027 INFO: epoch:230, iter:514300, lr: 0.000016 loss: 0.032262  eta: 1 day, 7:27:29, time (data): 1.207
+2022-05-25 03:52:20,626 INFO: epoch:230, iter:514400, lr: 0.000016 loss: 0.009474  eta: 1 day, 7:24:55, time (data): 1.207
+2022-05-25 03:54:21,026 INFO: epoch:230, iter:514500, lr: 0.000016 loss: 0.020887  eta: 1 day, 7:22:20, time (data): 1.204
+2022-05-25 03:56:21,431 INFO: epoch:230, iter:514600, lr: 0.000016 loss: 0.016109  eta: 1 day, 7:19:46, time (data): 1.210
+2022-05-25 03:58:21,888 INFO: epoch:230, iter:514700, lr: 0.000016 loss: 0.005739  eta: 1 day, 7:17:12, time (data): 1.210
+2022-05-25 04:00:22,368 INFO: epoch:230, iter:514800, lr: 0.000015 loss: 0.015537  eta: 1 day, 7:14:38, time (data): 1.205
+2022-05-25 04:02:22,945 INFO: epoch:230, iter:514900, lr: 0.000015 loss: 0.009601  eta: 1 day, 7:12:05, time (data): 1.203
+2022-05-25 04:04:23,431 INFO: epoch:230, iter:515000, lr: 0.000015 loss: 0.008396  eta: 1 day, 7:09:31, time (data): 1.207
+2022-05-25 04:06:23,925 INFO: epoch:230, iter:515100, lr: 0.000015 loss: 0.007628  eta: 1 day, 7:06:58, time (data): 1.203
+2022-05-25 04:08:24,430 INFO: epoch:230, iter:515200, lr: 0.000015 loss: 0.025531  eta: 1 day, 7:04:25, time (data): 1.204
+2022-05-25 04:10:25,129 INFO: epoch:230, iter:515300, lr: 0.000015 loss: 0.020208  eta: 1 day, 7:01:52, time (data): 1.215
+2022-05-25 04:12:25,768 INFO: epoch:230, iter:515400, lr: 0.000015 loss: 0.005955  eta: 1 day, 6:59:19, time (data): 1.206
+2022-05-25 04:14:26,429 INFO: epoch:230, iter:515500, lr: 0.000015 loss: 0.011726  eta: 1 day, 6:56:47, time (data): 1.206
+2022-05-25 04:16:27,063 INFO: epoch:230, iter:515600, lr: 0.000015 loss: 0.013249  eta: 1 day, 6:54:14, time (data): 1.207
+2022-05-25 04:18:27,772 INFO: epoch:230, iter:515700, lr: 0.000015 loss: 0.009175  eta: 1 day, 6:51:42, time (data): 1.204
+2022-05-25 04:20:28,565 INFO: epoch:230, iter:515800, lr: 0.000015 loss: 0.014072  eta: 1 day, 6:49:10, time (data): 1.212
+2022-05-25 04:22:29,328 INFO: epoch:230, iter:515900, lr: 0.000015 loss: 0.002691  eta: 1 day, 6:46:39, time (data): 1.215
+2022-05-25 04:24:29,803 INFO: epoch:230, iter:516000, lr: 0.000015 loss: 0.005903  eta: 1 day, 6:44:06, time (data): 1.202
+2022-05-25 04:26:30,230 INFO: epoch:230, iter:516100, lr: 0.000015 loss: 0.003644  eta: 1 day, 6:41:34, time (data): 1.203
+2022-05-25 04:28:30,648 INFO: epoch:230, iter:516200, lr: 0.000015 loss: 0.013354  eta: 1 day, 6:39:02, time (data): 1.201
+2022-05-25 04:30:31,277 INFO: epoch:230, iter:516300, lr: 0.000015 loss: 0.019689  eta: 1 day, 6:36:31, time (data): 1.204
+2022-05-25 04:32:31,926 INFO: epoch:230, iter:516400, lr: 0.000015 loss: 0.012310  eta: 1 day, 6:34:00, time (data): 1.204
+2022-05-25 04:34:32,596 INFO: epoch:230, iter:516500, lr: 0.000015 loss: 0.011876  eta: 1 day, 6:31:29, time (data): 1.211
+2022-05-25 04:34:52,031 INFO: Saving models and training states on epoch 230.
+2022-05-25 04:35:00,408 INFO: Validation ValSet,		 # psnr: 34.3846
+2022-05-25 04:36:42,730 INFO: epoch:231, iter:516600, lr: 0.000015 loss: 0.007150  eta: 1 day, 6:29:14, time (data): 1.210
+2022-05-25 04:38:43,524 INFO: epoch:231, iter:516700, lr: 0.000015 loss: 0.005756  eta: 1 day, 6:26:44, time (data): 1.209
+2022-05-25 04:40:44,167 INFO: epoch:231, iter:516800, lr: 0.000015 loss: 0.013096  eta: 1 day, 6:24:13, time (data): 1.205
+2022-05-25 04:42:44,831 INFO: epoch:231, iter:516900, lr: 0.000015 loss: 0.016408  eta: 1 day, 6:21:42, time (data): 1.209
+2022-05-25 04:44:45,460 INFO: epoch:231, iter:517000, lr: 0.000015 loss: 0.014068  eta: 1 day, 6:19:11, time (data): 1.210
+2022-05-25 04:46:46,170 INFO: epoch:231, iter:517100, lr: 0.000015 loss: 0.002599  eta: 1 day, 6:16:41, time (data): 1.212
+2022-05-25 04:48:46,913 INFO: epoch:231, iter:517200, lr: 0.000015 loss: 0.010298  eta: 1 day, 6:14:11, time (data): 1.208
+2022-05-25 04:50:47,649 INFO: epoch:231, iter:517300, lr: 0.000015 loss: 0.028048  eta: 1 day, 6:11:41, time (data): 1.212
+2022-05-25 04:52:48,350 INFO: epoch:231, iter:517400, lr: 0.000015 loss: 0.014298  eta: 1 day, 6:09:11, time (data): 1.203
+2022-05-25 04:54:49,056 INFO: epoch:231, iter:517500, lr: 0.000015 loss: 0.016335  eta: 1 day, 6:06:41, time (data): 1.207
+2022-05-25 04:56:49,866 INFO: epoch:231, iter:517600, lr: 0.000015 loss: 0.021198  eta: 1 day, 6:04:12, time (data): 1.210
+2022-05-25 04:58:50,475 INFO: epoch:231, iter:517700, lr: 0.000015 loss: 0.020957  eta: 1 day, 6:01:42, time (data): 1.206
+2022-05-25 05:00:51,188 INFO: epoch:231, iter:517800, lr: 0.000015 loss: 0.017077  eta: 1 day, 5:59:12, time (data): 1.210
+2022-05-25 05:02:51,897 INFO: epoch:231, iter:517900, lr: 0.000014 loss: 0.020963  eta: 1 day, 5:56:43, time (data): 1.208
+2022-05-25 05:04:52,617 INFO: epoch:231, iter:518000, lr: 0.000014 loss: 0.011703  eta: 1 day, 5:54:14, time (data): 1.208
+2022-05-25 05:06:53,287 INFO: epoch:231, iter:518100, lr: 0.000014 loss: 0.032099  eta: 1 day, 5:51:44, time (data): 1.206
+2022-05-25 05:08:53,958 INFO: epoch:231, iter:518200, lr: 0.000014 loss: 0.021462  eta: 1 day, 5:49:15, time (data): 1.206
+2022-05-25 05:10:54,907 INFO: epoch:231, iter:518300, lr: 0.000014 loss: 0.007033  eta: 1 day, 5:46:47, time (data): 1.206
+2022-05-25 05:12:55,574 INFO: epoch:231, iter:518400, lr: 0.000014 loss: 0.013347  eta: 1 day, 5:44:18, time (data): 1.211
+2022-05-25 05:14:56,296 INFO: epoch:231, iter:518500, lr: 0.000014 loss: 0.008049  eta: 1 day, 5:41:49, time (data): 1.207
+2022-05-25 05:16:57,159 INFO: epoch:231, iter:518600, lr: 0.000014 loss: 0.013969  eta: 1 day, 5:39:21, time (data): 1.207
+2022-05-25 05:18:57,936 INFO: epoch:231, iter:518700, lr: 0.000014 loss: 0.010279  eta: 1 day, 5:36:53, time (data): 1.205
+2022-05-25 05:20:00,867 INFO: Saving models and training states on epoch 231.
+2022-05-25 05:20:09,230 INFO: Validation ValSet,		 # psnr: 34.3843
+2022-05-25 05:21:08,268 INFO: epoch:232, iter:518800, lr: 0.000014 loss: 0.043886  eta: 1 day, 5:34:40, time (data): 1.208
+2022-05-25 05:23:08,990 INFO: epoch:232, iter:518900, lr: 0.000014 loss: 0.022329  eta: 1 day, 5:32:12, time (data): 1.206
+2022-05-25 05:25:10,384 INFO: epoch:232, iter:519000, lr: 0.000014 loss: 0.026838  eta: 1 day, 5:29:45, time (data): 1.230
+2022-05-25 05:27:10,921 INFO: epoch:232, iter:519100, lr: 0.000014 loss: 0.009335  eta: 1 day, 5:27:17, time (data): 1.202
+2022-05-25 05:29:11,401 INFO: epoch:232, iter:519200, lr: 0.000014 loss: 0.016822  eta: 1 day, 5:24:48, time (data): 1.206
+2022-05-25 05:31:11,959 INFO: epoch:232, iter:519300, lr: 0.000014 loss: 0.010371  eta: 1 day, 5:22:20, time (data): 1.206
+2022-05-25 05:33:12,778 INFO: epoch:232, iter:519400, lr: 0.000014 loss: 0.005560  eta: 1 day, 5:19:53, time (data): 1.205
+2022-05-25 05:35:13,611 INFO: epoch:232, iter:519500, lr: 0.000014 loss: 0.029676  eta: 1 day, 5:17:25, time (data): 1.206
+2022-05-25 05:37:14,234 INFO: epoch:232, iter:519600, lr: 0.000014 loss: 0.012774  eta: 1 day, 5:14:58, time (data): 1.205
+2022-05-25 05:39:14,890 INFO: epoch:232, iter:519700, lr: 0.000014 loss: 0.027426  eta: 1 day, 5:12:30, time (data): 1.211
+2022-05-25 05:41:15,454 INFO: epoch:232, iter:519800, lr: 0.000014 loss: 0.014471  eta: 1 day, 5:10:03, time (data): 1.209
+2022-05-25 05:43:16,155 INFO: epoch:232, iter:519900, lr: 0.000014 loss: 0.005238  eta: 1 day, 5:07:35, time (data): 1.210
+2022-05-25 05:45:16,845 INFO: epoch:232, iter:520000, lr: 0.000014 loss: 0.013157  eta: 1 day, 5:05:08, time (data): 1.204
+2022-05-25 05:47:17,502 INFO: epoch:232, iter:520100, lr: 0.000014 loss: 0.015991  eta: 1 day, 5:02:41, time (data): 1.209
+2022-05-25 05:49:18,143 INFO: epoch:232, iter:520200, lr: 0.000014 loss: 0.021898  eta: 1 day, 5:00:14, time (data): 1.204
+2022-05-25 05:51:18,744 INFO: epoch:232, iter:520300, lr: 0.000014 loss: 0.009449  eta: 1 day, 4:57:47, time (data): 1.204
+2022-05-25 05:53:19,344 INFO: epoch:232, iter:520400, lr: 0.000014 loss: 0.008813  eta: 1 day, 4:55:20, time (data): 1.211
+2022-05-25 05:55:20,225 INFO: epoch:232, iter:520500, lr: 0.000014 loss: 0.009974  eta: 1 day, 4:52:54, time (data): 1.204
+2022-05-25 05:57:21,063 INFO: epoch:232, iter:520600, lr: 0.000014 loss: 0.019428  eta: 1 day, 4:50:28, time (data): 1.210
+2022-05-25 05:59:21,725 INFO: epoch:232, iter:520700, lr: 0.000014 loss: 0.012526  eta: 1 day, 4:48:01, time (data): 1.206
+2022-05-25 06:01:22,496 INFO: epoch:232, iter:520800, lr: 0.000014 loss: 0.013990  eta: 1 day, 4:45:35, time (data): 1.207
+2022-05-25 06:03:23,431 INFO: epoch:232, iter:520900, lr: 0.000014 loss: 0.012011  eta: 1 day, 4:43:09, time (data): 1.206
+2022-05-25 06:05:09,725 INFO: Saving models and training states on epoch 232.
+2022-05-25 06:05:18,212 INFO: Validation ValSet,		 # psnr: 34.3856
+2022-05-25 06:05:18,213 INFO: Saving best models and training states on epoch 232.
+2022-05-25 06:05:35,981 INFO: epoch:233, iter:521000, lr: 0.000013 loss: 0.002501  eta: 1 day, 4:41:02, time (data): 1.216
+2022-05-25 06:07:36,703 INFO: epoch:233, iter:521100, lr: 0.000013 loss: 0.007785  eta: 1 day, 4:38:36, time (data): 1.208
+2022-05-25 06:09:37,376 INFO: epoch:233, iter:521200, lr: 0.000013 loss: 0.018714  eta: 1 day, 4:36:10, time (data): 1.205
+2022-05-25 06:11:38,163 INFO: epoch:233, iter:521300, lr: 0.000013 loss: 0.012331  eta: 1 day, 4:33:44, time (data): 1.207
+2022-05-25 06:13:38,938 INFO: epoch:233, iter:521400, lr: 0.000013 loss: 0.013281  eta: 1 day, 4:31:18, time (data): 1.209
+2022-05-25 06:15:39,683 INFO: epoch:233, iter:521500, lr: 0.000013 loss: 0.005625  eta: 1 day, 4:28:53, time (data): 1.207
+2022-05-25 06:17:40,373 INFO: epoch:233, iter:521600, lr: 0.000013 loss: 0.021698  eta: 1 day, 4:26:27, time (data): 1.205
+2022-05-25 06:19:40,812 INFO: epoch:233, iter:521700, lr: 0.000013 loss: 0.010099  eta: 1 day, 4:24:01, time (data): 1.210
+2022-05-25 06:21:41,370 INFO: epoch:233, iter:521800, lr: 0.000013 loss: 0.018837  eta: 1 day, 4:21:36, time (data): 1.205
+2022-05-25 06:23:41,857 INFO: epoch:233, iter:521900, lr: 0.000013 loss: 0.015049  eta: 1 day, 4:19:10, time (data): 1.204
+2022-05-25 06:25:42,493 INFO: epoch:233, iter:522000, lr: 0.000013 loss: 0.032341  eta: 1 day, 4:16:45, time (data): 1.210
+2022-05-25 06:27:43,436 INFO: epoch:233, iter:522100, lr: 0.000013 loss: 0.011633  eta: 1 day, 4:14:20, time (data): 1.204
+2022-05-25 06:29:44,086 INFO: epoch:233, iter:522200, lr: 0.000013 loss: 0.021723  eta: 1 day, 4:11:55, time (data): 1.205
+2022-05-25 06:31:44,806 INFO: epoch:233, iter:522300, lr: 0.000013 loss: 0.004596  eta: 1 day, 4:09:30, time (data): 1.204
+2022-05-25 06:33:45,409 INFO: epoch:233, iter:522400, lr: 0.000013 loss: 0.018559  eta: 1 day, 4:07:05, time (data): 1.209
+2022-05-25 06:35:45,988 INFO: epoch:233, iter:522500, lr: 0.000013 loss: 0.001050  eta: 1 day, 4:04:40, time (data): 1.206
+2022-05-25 06:37:46,649 INFO: epoch:233, iter:522600, lr: 0.000013 loss: 0.021236  eta: 1 day, 4:02:16, time (data): 1.205
+2022-05-25 06:39:47,176 INFO: epoch:233, iter:522700, lr: 0.000013 loss: 0.027662  eta: 1 day, 3:59:51, time (data): 1.205
+2022-05-25 06:41:47,765 INFO: epoch:233, iter:522800, lr: 0.000013 loss: 0.011698  eta: 1 day, 3:57:26, time (data): 1.205
+2022-05-25 06:43:48,583 INFO: epoch:233, iter:522900, lr: 0.000013 loss: 0.006832  eta: 1 day, 3:55:02, time (data): 1.205
+2022-05-25 06:45:49,428 INFO: epoch:233, iter:523000, lr: 0.000013 loss: 0.020367  eta: 1 day, 3:52:38, time (data): 1.207
+2022-05-25 06:47:50,189 INFO: epoch:233, iter:523100, lr: 0.000013 loss: 0.034498  eta: 1 day, 3:50:14, time (data): 1.209
+2022-05-25 06:49:51,219 INFO: epoch:233, iter:523200, lr: 0.000013 loss: 0.010279  eta: 1 day, 3:47:50, time (data): 1.213
+2022-05-25 06:50:20,347 INFO: Saving models and training states on epoch 233.
+2022-05-25 06:50:28,727 INFO: Validation ValSet,		 # psnr: 34.3815
+2022-05-25 06:52:01,346 INFO: epoch:234, iter:523300, lr: 0.000013 loss: 0.011670  eta: 1 day, 3:45:40, time (data): 1.207
+2022-05-25 06:54:02,016 INFO: epoch:234, iter:523400, lr: 0.000013 loss: 0.003497  eta: 1 day, 3:43:16, time (data): 1.207
+2022-05-25 06:56:02,633 INFO: epoch:234, iter:523500, lr: 0.000013 loss: 0.003348  eta: 1 day, 3:40:52, time (data): 1.208
+2022-05-25 06:58:03,307 INFO: epoch:234, iter:523600, lr: 0.000013 loss: 0.014723  eta: 1 day, 3:38:28, time (data): 1.205
+2022-05-25 07:00:03,957 INFO: epoch:234, iter:523700, lr: 0.000013 loss: 0.016802  eta: 1 day, 3:36:04, time (data): 1.206
+2022-05-25 07:02:04,758 INFO: epoch:234, iter:523800, lr: 0.000013 loss: 0.001091  eta: 1 day, 3:33:41, time (data): 1.208
+2022-05-25 07:04:05,456 INFO: epoch:234, iter:523900, lr: 0.000013 loss: 0.020908  eta: 1 day, 3:31:17, time (data): 1.202
+2022-05-25 07:06:06,123 INFO: epoch:234, iter:524000, lr: 0.000013 loss: 0.019065  eta: 1 day, 3:28:54, time (data): 1.207
+2022-05-25 07:08:06,753 INFO: epoch:234, iter:524100, lr: 0.000013 loss: 0.010198  eta: 1 day, 3:26:30, time (data): 1.204
+2022-05-25 07:10:07,323 INFO: epoch:234, iter:524200, lr: 0.000013 loss: 0.010101  eta: 1 day, 3:24:07, time (data): 1.209
+2022-05-25 07:12:07,921 INFO: epoch:234, iter:524300, lr: 0.000012 loss: 0.012394  eta: 1 day, 3:21:43, time (data): 1.209
+2022-05-25 07:14:08,649 INFO: epoch:234, iter:524400, lr: 0.000012 loss: 0.023469  eta: 1 day, 3:19:20, time (data): 1.203
+2022-05-25 07:16:09,428 INFO: epoch:234, iter:524500, lr: 0.000012 loss: 0.021810  eta: 1 day, 3:16:57, time (data): 1.207
+2022-05-25 07:18:10,198 INFO: epoch:234, iter:524600, lr: 0.000012 loss: 0.005476  eta: 1 day, 3:14:34, time (data): 1.208
+2022-05-25 07:20:11,021 INFO: epoch:234, iter:524700, lr: 0.000012 loss: 0.015065  eta: 1 day, 3:12:12, time (data): 1.207
+2022-05-25 07:22:11,826 INFO: epoch:234, iter:524800, lr: 0.000012 loss: 0.015655  eta: 1 day, 3:09:49, time (data): 1.207
+2022-05-25 07:24:12,471 INFO: epoch:234, iter:524900, lr: 0.000012 loss: 0.011312  eta: 1 day, 3:07:26, time (data): 1.209
+2022-05-25 07:26:13,280 INFO: epoch:234, iter:525000, lr: 0.000012 loss: 0.023812  eta: 1 day, 3:05:04, time (data): 1.210
+2022-05-25 07:28:14,135 INFO: epoch:234, iter:525100, lr: 0.000012 loss: 0.009626  eta: 1 day, 3:02:41, time (data): 1.208
+2022-05-25 07:30:14,740 INFO: epoch:234, iter:525200, lr: 0.000012 loss: 0.004707  eta: 1 day, 3:00:19, time (data): 1.209
+2022-05-25 07:32:15,477 INFO: epoch:234, iter:525300, lr: 0.000012 loss: 0.011232  eta: 1 day, 2:57:57, time (data): 1.210
+2022-05-25 07:34:16,162 INFO: epoch:234, iter:525400, lr: 0.000012 loss: 0.004205  eta: 1 day, 2:55:34, time (data): 1.203
+2022-05-25 07:35:28,655 INFO: Saving models and training states on epoch 234.
+2022-05-25 07:35:37,136 INFO: Validation ValSet,		 # psnr: 34.3854
+2022-05-25 07:36:26,351 INFO: epoch:235, iter:525500, lr: 0.000012 loss: 0.019667  eta: 1 day, 2:53:25, time (data): 1.204
+2022-05-25 07:38:26,853 INFO: epoch:235, iter:525600, lr: 0.000012 loss: 0.003873  eta: 1 day, 2:51:02, time (data): 1.205
+2022-05-25 07:40:27,390 INFO: epoch:235, iter:525700, lr: 0.000012 loss: 0.014377  eta: 1 day, 2:48:40, time (data): 1.205
+2022-05-25 07:42:27,825 INFO: epoch:235, iter:525800, lr: 0.000012 loss: 0.015962  eta: 1 day, 2:46:17, time (data): 1.203
+2022-05-25 07:44:28,264 INFO: epoch:235, iter:525900, lr: 0.000012 loss: 0.016432  eta: 1 day, 2:43:55, time (data): 1.207
+2022-05-25 07:46:28,794 INFO: epoch:235, iter:526000, lr: 0.000012 loss: 0.009761  eta: 1 day, 2:41:33, time (data): 1.203
+2022-05-25 07:48:29,380 INFO: epoch:235, iter:526100, lr: 0.000012 loss: 0.005268  eta: 1 day, 2:39:11, time (data): 1.207
+2022-05-25 07:50:29,998 INFO: epoch:235, iter:526200, lr: 0.000012 loss: 0.013622  eta: 1 day, 2:36:49, time (data): 1.205
+2022-05-25 07:52:30,541 INFO: epoch:235, iter:526300, lr: 0.000012 loss: 0.002496  eta: 1 day, 2:34:27, time (data): 1.206
+2022-05-25 07:54:31,185 INFO: epoch:235, iter:526400, lr: 0.000012 loss: 0.012074  eta: 1 day, 2:32:06, time (data): 1.207
+2022-05-25 07:56:31,857 INFO: epoch:235, iter:526500, lr: 0.000012 loss: 0.042717  eta: 1 day, 2:29:44, time (data): 1.205
+2022-05-25 07:58:32,565 INFO: epoch:235, iter:526600, lr: 0.000012 loss: 0.013475  eta: 1 day, 2:27:23, time (data): 1.211
+2022-05-25 08:00:33,370 INFO: epoch:235, iter:526700, lr: 0.000012 loss: 0.010791  eta: 1 day, 2:25:01, time (data): 1.210
+2022-05-25 08:02:34,211 INFO: epoch:235, iter:526800, lr: 0.000012 loss: 0.006666  eta: 1 day, 2:22:40, time (data): 1.204
+2022-05-25 08:04:34,775 INFO: epoch:235, iter:526900, lr: 0.000012 loss: 0.007754  eta: 1 day, 2:20:19, time (data): 1.204
+2022-05-25 08:06:35,332 INFO: epoch:235, iter:527000, lr: 0.000012 loss: 0.018970  eta: 1 day, 2:17:57, time (data): 1.204
+2022-05-25 08:08:35,944 INFO: epoch:235, iter:527100, lr: 0.000012 loss: 0.007880  eta: 1 day, 2:15:36, time (data): 1.199
+2022-05-25 08:10:36,608 INFO: epoch:235, iter:527200, lr: 0.000012 loss: 0.011216  eta: 1 day, 2:13:15, time (data): 1.205
+2022-05-25 08:12:37,164 INFO: epoch:235, iter:527300, lr: 0.000012 loss: 0.006786  eta: 1 day, 2:10:54, time (data): 1.207
+2022-05-25 08:14:37,817 INFO: epoch:235, iter:527400, lr: 0.000012 loss: 0.021026  eta: 1 day, 2:08:33, time (data): 1.205
+2022-05-25 08:16:38,230 INFO: epoch:235, iter:527500, lr: 0.000012 loss: 0.005011  eta: 1 day, 2:06:12, time (data): 1.203
+2022-05-25 08:18:38,682 INFO: epoch:235, iter:527600, lr: 0.000012 loss: 0.027674  eta: 1 day, 2:03:51, time (data): 1.205
+2022-05-25 08:20:34,487 INFO: Saving models and training states on epoch 235.
+2022-05-25 08:20:42,921 INFO: Validation ValSet,		 # psnr: 34.3852
+2022-05-25 08:20:48,719 INFO: epoch:236, iter:527700, lr: 0.000011 loss: 0.018848  eta: 1 day, 2:01:42, time (data): 1.215
+2022-05-25 08:22:49,518 INFO: epoch:236, iter:527800, lr: 0.000011 loss: 0.002926  eta: 1 day, 1:59:21, time (data): 1.206
+2022-05-25 08:24:50,093 INFO: epoch:236, iter:527900, lr: 0.000011 loss: 0.019063  eta: 1 day, 1:57:00, time (data): 1.208
+2022-05-25 08:26:50,620 INFO: epoch:236, iter:528000, lr: 0.000011 loss: 0.018685  eta: 1 day, 1:54:40, time (data): 1.203
+2022-05-25 08:28:51,177 INFO: epoch:236, iter:528100, lr: 0.000011 loss: 0.004442  eta: 1 day, 1:52:19, time (data): 1.204
+2022-05-25 08:30:51,749 INFO: epoch:236, iter:528200, lr: 0.000011 loss: 0.006795  eta: 1 day, 1:49:59, time (data): 1.205
+2022-05-25 08:32:52,371 INFO: epoch:236, iter:528300, lr: 0.000011 loss: 0.010659  eta: 1 day, 1:47:38, time (data): 1.206
+2022-05-25 08:34:52,972 INFO: epoch:236, iter:528400, lr: 0.000011 loss: 0.015718  eta: 1 day, 1:45:18, time (data): 1.205
+2022-05-25 08:36:53,560 INFO: epoch:236, iter:528500, lr: 0.000011 loss: 0.010342  eta: 1 day, 1:42:58, time (data): 1.207
+2022-05-25 08:38:54,152 INFO: epoch:236, iter:528600, lr: 0.000011 loss: 0.032296  eta: 1 day, 1:40:37, time (data): 1.208
+2022-05-25 08:40:54,967 INFO: epoch:236, iter:528700, lr: 0.000011 loss: 0.004190  eta: 1 day, 1:38:17, time (data): 1.233
+2022-05-25 08:42:55,684 INFO: epoch:236, iter:528800, lr: 0.000011 loss: 0.003653  eta: 1 day, 1:35:57, time (data): 1.205
+2022-05-25 08:44:56,392 INFO: epoch:236, iter:528900, lr: 0.000011 loss: 0.001739  eta: 1 day, 1:33:38, time (data): 1.211
+2022-05-25 08:46:57,200 INFO: epoch:236, iter:529000, lr: 0.000011 loss: 0.018636  eta: 1 day, 1:31:18, time (data): 1.206
+2022-05-25 08:48:57,947 INFO: epoch:236, iter:529100, lr: 0.000011 loss: 0.010593  eta: 1 day, 1:28:58, time (data): 1.207
+2022-05-25 08:50:58,641 INFO: epoch:236, iter:529200, lr: 0.000011 loss: 0.008453  eta: 1 day, 1:26:38, time (data): 1.202
+2022-05-25 08:52:59,373 INFO: epoch:236, iter:529300, lr: 0.000011 loss: 0.029646  eta: 1 day, 1:24:19, time (data): 1.208
+2022-05-25 08:55:00,138 INFO: epoch:236, iter:529400, lr: 0.000011 loss: 0.006917  eta: 1 day, 1:21:59, time (data): 1.212
+2022-05-25 08:57:00,868 INFO: epoch:236, iter:529500, lr: 0.000011 loss: 0.014073  eta: 1 day, 1:19:40, time (data): 1.206
+2022-05-25 08:59:01,460 INFO: epoch:236, iter:529600, lr: 0.000011 loss: 0.011452  eta: 1 day, 1:17:20, time (data): 1.206
+2022-05-25 09:01:02,259 INFO: epoch:236, iter:529700, lr: 0.000011 loss: 0.020580  eta: 1 day, 1:15:01, time (data): 1.224
+2022-05-25 09:03:03,013 INFO: epoch:236, iter:529800, lr: 0.000011 loss: 0.011372  eta: 1 day, 1:12:42, time (data): 1.204
+2022-05-25 09:05:03,716 INFO: epoch:236, iter:529900, lr: 0.000011 loss: 0.016770  eta: 1 day, 1:10:22, time (data): 1.206
+2022-05-25 09:05:42,484 INFO: Saving models and training states on epoch 236.
+2022-05-25 09:05:50,993 INFO: Validation ValSet,		 # psnr: 34.3850
+2022-05-25 09:07:14,098 INFO: epoch:237, iter:530000, lr: 0.000011 loss: 0.013547  eta: 1 day, 1:08:14, time (data): 1.208
+2022-05-25 09:09:14,813 INFO: epoch:237, iter:530100, lr: 0.000011 loss: 0.011079  eta: 1 day, 1:05:55, time (data): 1.278
+2022-05-25 09:11:15,480 INFO: epoch:237, iter:530200, lr: 0.000011 loss: 0.021442  eta: 1 day, 1:03:36, time (data): 1.206
+2022-05-25 09:13:16,175 INFO: epoch:237, iter:530300, lr: 0.000011 loss: 0.008842  eta: 1 day, 1:01:17, time (data): 1.209
+2022-05-25 09:15:16,911 INFO: epoch:237, iter:530400, lr: 0.000011 loss: 0.006806  eta: 1 day, 0:58:58, time (data): 1.202
+2022-05-25 09:17:17,659 INFO: epoch:237, iter:530500, lr: 0.000011 loss: 0.013697  eta: 1 day, 0:56:39, time (data): 1.203
+2022-05-25 09:19:18,438 INFO: epoch:237, iter:530600, lr: 0.000011 loss: 0.025263  eta: 1 day, 0:54:20, time (data): 1.206
+2022-05-25 09:21:19,262 INFO: epoch:237, iter:530700, lr: 0.000011 loss: 0.016041  eta: 1 day, 0:52:02, time (data): 1.205
+2022-05-25 09:23:19,878 INFO: epoch:237, iter:530800, lr: 0.000011 loss: 0.019885  eta: 1 day, 0:49:43, time (data): 1.207
+2022-05-25 09:25:20,614 INFO: epoch:237, iter:530900, lr: 0.000011 loss: 0.011947  eta: 1 day, 0:47:24, time (data): 1.204
+2022-05-25 09:27:21,671 INFO: epoch:237, iter:531000, lr: 0.000011 loss: 0.025970  eta: 1 day, 0:45:06, time (data): 1.236
+2022-05-25 09:29:24,113 INFO: epoch:237, iter:531100, lr: 0.000011 loss: 0.011890  eta: 1 day, 0:42:49, time (data): 1.208
+2022-05-25 09:31:24,906 INFO: epoch:237, iter:531200, lr: 0.000011 loss: 0.021313  eta: 1 day, 0:40:31, time (data): 1.210
+2022-05-25 09:33:25,467 INFO: epoch:237, iter:531300, lr: 0.000010 loss: 0.010502  eta: 1 day, 0:38:12, time (data): 1.207
+2022-05-25 09:35:26,013 INFO: epoch:237, iter:531400, lr: 0.000010 loss: 0.013685  eta: 1 day, 0:35:54, time (data): 1.204
+2022-05-25 09:37:26,557 INFO: epoch:237, iter:531500, lr: 0.000010 loss: 0.045176  eta: 1 day, 0:33:35, time (data): 1.207
+2022-05-25 09:39:27,226 INFO: epoch:237, iter:531600, lr: 0.000010 loss: 0.012377  eta: 1 day, 0:31:17, time (data): 1.204
+2022-05-25 09:41:27,900 INFO: epoch:237, iter:531700, lr: 0.000010 loss: 0.009192  eta: 1 day, 0:28:58, time (data): 1.210
+2022-05-25 09:43:28,520 INFO: epoch:237, iter:531800, lr: 0.000010 loss: 0.006458  eta: 1 day, 0:26:40, time (data): 1.212
+2022-05-25 09:45:29,085 INFO: epoch:237, iter:531900, lr: 0.000010 loss: 0.005113  eta: 1 day, 0:24:22, time (data): 1.207
+2022-05-25 09:47:29,646 INFO: epoch:237, iter:532000, lr: 0.000010 loss: 0.027408  eta: 1 day, 0:22:04, time (data): 1.205
+2022-05-25 09:49:30,157 INFO: epoch:237, iter:532100, lr: 0.000010 loss: 0.035293  eta: 1 day, 0:19:45, time (data): 1.207
+2022-05-25 09:50:52,237 INFO: Saving models and training states on epoch 237.
+2022-05-25 09:51:00,660 INFO: Validation ValSet,		 # psnr: 34.3839
+2022-05-25 09:51:40,301 INFO: epoch:238, iter:532200, lr: 0.000010 loss: 0.012128  eta: 1 day, 0:17:38, time (data): 1.204
+2022-05-25 09:53:40,993 INFO: epoch:238, iter:532300, lr: 0.000010 loss: 0.025457  eta: 1 day, 0:15:20, time (data): 1.205
+2022-05-25 09:55:41,547 INFO: epoch:238, iter:532400, lr: 0.000010 loss: 0.007121  eta: 1 day, 0:13:02, time (data): 1.206
+2022-05-25 09:57:42,152 INFO: epoch:238, iter:532500, lr: 0.000010 loss: 0.016139  eta: 1 day, 0:10:44, time (data): 1.203
+2022-05-25 09:59:42,813 INFO: epoch:238, iter:532600, lr: 0.000010 loss: 0.017076  eta: 1 day, 0:08:26, time (data): 1.207
+2022-05-25 10:01:43,478 INFO: epoch:238, iter:532700, lr: 0.000010 loss: 0.014340  eta: 1 day, 0:06:08, time (data): 1.208
+2022-05-25 10:03:44,056 INFO: epoch:238, iter:532800, lr: 0.000010 loss: 0.005729  eta: 1 day, 0:03:50, time (data): 1.210
+2022-05-25 10:05:44,657 INFO: epoch:238, iter:532900, lr: 0.000010 loss: 0.019706  eta: 1 day, 0:01:33, time (data): 1.207
+2022-05-25 10:07:45,204 INFO: epoch:238, iter:533000, lr: 0.000010 loss: 0.018372  eta: 23:59:15, time (data): 1.205
+2022-05-25 10:09:45,752 INFO: epoch:238, iter:533100, lr: 0.000010 loss: 0.014043  eta: 23:56:57, time (data): 1.208
+2022-05-25 10:11:46,317 INFO: epoch:238, iter:533200, lr: 0.000010 loss: 0.024577  eta: 23:54:40, time (data): 1.207
+2022-05-25 10:13:46,925 INFO: epoch:238, iter:533300, lr: 0.000010 loss: 0.003959  eta: 23:52:22, time (data): 1.208
+2022-05-25 10:15:48,908 INFO: epoch:238, iter:533400, lr: 0.000010 loss: 0.017473  eta: 23:50:06, time (data): 1.227
+2022-05-25 10:17:50,716 INFO: epoch:238, iter:533500, lr: 0.000010 loss: 0.011553  eta: 23:47:50, time (data): 1.204
+2022-05-25 10:19:51,337 INFO: epoch:238, iter:533600, lr: 0.000010 loss: 0.007489  eta: 23:45:33, time (data): 1.204
+2022-05-25 10:21:52,010 INFO: epoch:238, iter:533700, lr: 0.000010 loss: 0.027374  eta: 23:43:15, time (data): 1.211
+2022-05-25 10:23:52,714 INFO: epoch:238, iter:533800, lr: 0.000010 loss: 0.028010  eta: 23:40:58, time (data): 1.205
+2022-05-25 10:25:53,350 INFO: epoch:238, iter:533900, lr: 0.000010 loss: 0.025728  eta: 23:38:41, time (data): 1.205
+2022-05-25 10:27:54,052 INFO: epoch:238, iter:534000, lr: 0.000010 loss: 0.016643  eta: 23:36:24, time (data): 1.207
+2022-05-25 10:29:54,680 INFO: epoch:238, iter:534100, lr: 0.000010 loss: 0.004727  eta: 23:34:07, time (data): 1.206
+2022-05-25 10:31:55,646 INFO: epoch:238, iter:534200, lr: 0.000010 loss: 0.009058  eta: 23:31:50, time (data): 1.210
+2022-05-25 10:33:56,445 INFO: epoch:238, iter:534300, lr: 0.000010 loss: 0.029208  eta: 23:29:33, time (data): 1.206
+2022-05-25 10:35:57,211 INFO: epoch:238, iter:534400, lr: 0.000010 loss: 0.022414  eta: 23:27:17, time (data): 1.200
+2022-05-25 10:36:02,215 INFO: Saving models and training states on epoch 238.
+2022-05-25 10:36:10,938 INFO: Validation ValSet,		 # psnr: 34.3849
+2022-05-25 10:38:07,532 INFO: epoch:239, iter:534500, lr: 0.000010 loss: 0.005416  eta: 23:25:09, time (data): 1.202
+2022-05-25 10:40:08,067 INFO: epoch:239, iter:534600, lr: 0.000010 loss: 0.005406  eta: 23:22:53, time (data): 1.209
+2022-05-25 10:42:08,564 INFO: epoch:239, iter:534700, lr: 0.000010 loss: 0.024946  eta: 23:20:36, time (data): 1.202
+2022-05-25 10:44:09,112 INFO: epoch:239, iter:534800, lr: 0.000010 loss: 0.002267  eta: 23:18:19, time (data): 1.207
+2022-05-25 10:46:09,898 INFO: epoch:239, iter:534900, lr: 0.000010 loss: 0.023561  eta: 23:16:02, time (data): 1.209
+2022-05-25 10:48:11,193 INFO: epoch:239, iter:535000, lr: 0.000009 loss: 0.007233  eta: 23:13:46, time (data): 1.206
+2022-05-25 10:50:11,951 INFO: epoch:239, iter:535100, lr: 0.000009 loss: 0.007665  eta: 23:11:30, time (data): 1.204
+2022-05-25 10:52:12,667 INFO: epoch:239, iter:535200, lr: 0.000009 loss: 0.010614  eta: 23:09:13, time (data): 1.206
+2022-05-25 10:54:13,327 INFO: epoch:239, iter:535300, lr: 0.000009 loss: 0.003387  eta: 23:06:57, time (data): 1.205
+2022-05-25 10:56:14,074 INFO: epoch:239, iter:535400, lr: 0.000009 loss: 0.005667  eta: 23:04:40, time (data): 1.211
+2022-05-25 10:58:14,790 INFO: epoch:239, iter:535500, lr: 0.000009 loss: 0.014713  eta: 23:02:24, time (data): 1.208
+2022-05-25 11:00:15,552 INFO: epoch:239, iter:535600, lr: 0.000009 loss: 0.015811  eta: 23:00:08, time (data): 1.207
+2022-05-25 11:02:16,326 INFO: epoch:239, iter:535700, lr: 0.000009 loss: 0.008042  eta: 22:57:52, time (data): 1.207
+2022-05-25 11:04:17,116 INFO: epoch:239, iter:535800, lr: 0.000009 loss: 0.021976  eta: 22:55:36, time (data): 1.199
+2022-05-25 11:06:17,705 INFO: epoch:239, iter:535900, lr: 0.000009 loss: 0.017468  eta: 22:53:19, time (data): 1.203
+2022-05-25 11:08:18,271 INFO: epoch:239, iter:536000, lr: 0.000009 loss: 0.012477  eta: 22:51:03, time (data): 1.206
+2022-05-25 11:10:19,009 INFO: epoch:239, iter:536100, lr: 0.000009 loss: 0.025009  eta: 22:48:47, time (data): 1.209
+2022-05-25 11:12:19,706 INFO: epoch:239, iter:536200, lr: 0.000009 loss: 0.005980  eta: 22:46:31, time (data): 1.211
+2022-05-25 11:14:20,416 INFO: epoch:239, iter:536300, lr: 0.000009 loss: 0.002208  eta: 22:44:15, time (data): 1.211
+2022-05-25 11:16:21,227 INFO: epoch:239, iter:536400, lr: 0.000009 loss: 0.040181  eta: 22:41:59, time (data): 1.210
+2022-05-25 11:18:21,938 INFO: epoch:239, iter:536500, lr: 0.000009 loss: 0.030593  eta: 22:39:43, time (data): 1.210
+2022-05-25 11:20:22,845 INFO: epoch:239, iter:536600, lr: 0.000009 loss: 0.025766  eta: 22:37:28, time (data): 1.205
+2022-05-25 11:21:11,265 INFO: Saving models and training states on epoch 239.
+2022-05-25 11:21:19,737 INFO: Validation ValSet,		 # psnr: 34.3860
+2022-05-25 11:21:19,738 INFO: Saving best models and training states on epoch 239.
+2022-05-25 11:22:35,592 INFO: epoch:240, iter:536700, lr: 0.000009 loss: 0.023165  eta: 22:35:23, time (data): 1.211
+2022-05-25 11:24:37,543 INFO: epoch:240, iter:536800, lr: 0.000009 loss: 0.005870  eta: 22:33:09, time (data): 1.210
+2022-05-25 11:26:38,141 INFO: epoch:240, iter:536900, lr: 0.000009 loss: 0.021217  eta: 22:30:53, time (data): 1.210
+2022-05-25 11:28:38,908 INFO: epoch:240, iter:537000, lr: 0.000009 loss: 0.024146  eta: 22:28:37, time (data): 1.210
+2022-05-25 11:30:39,685 INFO: epoch:240, iter:537100, lr: 0.000009 loss: 0.037150  eta: 22:26:22, time (data): 1.208
+2022-05-25 11:32:40,503 INFO: epoch:240, iter:537200, lr: 0.000009 loss: 0.000324  eta: 22:24:06, time (data): 1.207
+2022-05-25 11:34:41,288 INFO: epoch:240, iter:537300, lr: 0.000009 loss: 0.004730  eta: 22:21:51, time (data): 1.207
+2022-05-25 11:36:42,084 INFO: epoch:240, iter:537400, lr: 0.000009 loss: 0.032811  eta: 22:19:35, time (data): 1.208
+2022-05-25 11:38:42,773 INFO: epoch:240, iter:537500, lr: 0.000009 loss: 0.013887  eta: 22:17:20, time (data): 1.206
+2022-05-25 11:40:43,422 INFO: epoch:240, iter:537600, lr: 0.000009 loss: 0.000852  eta: 22:15:04, time (data): 1.207
+2022-05-25 11:42:44,235 INFO: epoch:240, iter:537700, lr: 0.000009 loss: 0.034276  eta: 22:12:49, time (data): 1.207
+2022-05-25 11:44:44,890 INFO: epoch:240, iter:537800, lr: 0.000009 loss: 0.022166  eta: 22:10:34, time (data): 1.208
+2022-05-25 11:46:45,761 INFO: epoch:240, iter:537900, lr: 0.000009 loss: 0.028401  eta: 22:08:18, time (data): 1.207
+2022-05-25 11:48:46,643 INFO: epoch:240, iter:538000, lr: 0.000009 loss: 0.016577  eta: 22:06:03, time (data): 1.208
+2022-05-25 11:50:47,446 INFO: epoch:240, iter:538100, lr: 0.000009 loss: 0.020959  eta: 22:03:48, time (data): 1.211
+2022-05-25 11:52:48,294 INFO: epoch:240, iter:538200, lr: 0.000009 loss: 0.012914  eta: 22:01:33, time (data): 1.212
+2022-05-25 11:54:49,141 INFO: epoch:240, iter:538300, lr: 0.000009 loss: 0.018034  eta: 21:59:18, time (data): 1.211
+2022-05-25 11:56:49,954 INFO: epoch:240, iter:538400, lr: 0.000009 loss: 0.016429  eta: 21:57:03, time (data): 1.208
+2022-05-25 11:58:50,891 INFO: epoch:240, iter:538500, lr: 0.000009 loss: 0.021100  eta: 21:54:48, time (data): 1.214
+2022-05-25 12:00:51,849 INFO: epoch:240, iter:538600, lr: 0.000009 loss: 0.011585  eta: 21:52:33, time (data): 1.207
+2022-05-25 12:02:52,717 INFO: epoch:240, iter:538700, lr: 0.000009 loss: 0.018050  eta: 21:50:19, time (data): 1.209
+2022-05-25 12:04:53,535 INFO: epoch:240, iter:538800, lr: 0.000009 loss: 0.010188  eta: 21:48:04, time (data): 1.206
+2022-05-25 12:06:25,518 INFO: Saving models and training states on epoch 240.
+2022-05-25 12:06:34,054 INFO: Validation ValSet,		 # psnr: 34.3854
+2022-05-25 12:07:03,937 INFO: epoch:241, iter:538900, lr: 0.000008 loss: 0.002629  eta: 21:45:57, time (data): 1.210
+2022-05-25 12:09:04,220 INFO: epoch:241, iter:539000, lr: 0.000008 loss: 0.015544  eta: 21:43:42, time (data): 1.200
+2022-05-25 12:11:04,746 INFO: epoch:241, iter:539100, lr: 0.000008 loss: 0.013259  eta: 21:41:27, time (data): 1.209
+2022-05-25 12:13:05,384 INFO: epoch:241, iter:539200, lr: 0.000008 loss: 0.004635  eta: 21:39:12, time (data): 1.201
+2022-05-25 12:15:05,955 INFO: epoch:241, iter:539300, lr: 0.000008 loss: 0.011935  eta: 21:36:58, time (data): 1.205
+2022-05-25 12:17:06,650 INFO: epoch:241, iter:539400, lr: 0.000008 loss: 0.007669  eta: 21:34:43, time (data): 1.208
+2022-05-25 12:19:07,272 INFO: epoch:241, iter:539500, lr: 0.000008 loss: 0.023870  eta: 21:32:28, time (data): 1.204
+2022-05-25 12:21:07,908 INFO: epoch:241, iter:539600, lr: 0.000008 loss: 0.007992  eta: 21:30:13, time (data): 1.204
+2022-05-25 12:23:08,533 INFO: epoch:241, iter:539700, lr: 0.000008 loss: 0.025324  eta: 21:27:59, time (data): 1.205
+2022-05-25 12:25:09,169 INFO: epoch:241, iter:539800, lr: 0.000008 loss: 0.010986  eta: 21:25:44, time (data): 1.203
+2022-05-25 12:27:09,855 INFO: epoch:241, iter:539900, lr: 0.000008 loss: 0.009966  eta: 21:23:30, time (data): 1.206
+2022-05-25 12:29:10,707 INFO: epoch:241, iter:540000, lr: 0.000008 loss: 0.025602  eta: 21:21:15, time (data): 1.204
+2022-05-25 12:31:11,248 INFO: epoch:241, iter:540100, lr: 0.000008 loss: 0.025466  eta: 21:19:01, time (data): 1.208
+2022-05-25 12:33:11,890 INFO: epoch:241, iter:540200, lr: 0.000008 loss: 0.013797  eta: 21:16:46, time (data): 1.205
+2022-05-25 12:35:12,570 INFO: epoch:241, iter:540300, lr: 0.000008 loss: 0.009440  eta: 21:14:32, time (data): 1.205
+2022-05-25 12:37:13,169 INFO: epoch:241, iter:540400, lr: 0.000008 loss: 0.005171  eta: 21:12:17, time (data): 1.208
+2022-05-25 12:39:13,893 INFO: epoch:241, iter:540500, lr: 0.000008 loss: 0.016588  eta: 21:10:03, time (data): 1.207
+2022-05-25 12:41:14,688 INFO: epoch:241, iter:540600, lr: 0.000008 loss: 0.010224  eta: 21:07:49, time (data): 1.209
+2022-05-25 12:43:15,299 INFO: epoch:241, iter:540700, lr: 0.000008 loss: 0.012526  eta: 21:05:35, time (data): 1.207
+2022-05-25 12:45:15,976 INFO: epoch:241, iter:540800, lr: 0.000008 loss: 0.015705  eta: 21:03:21, time (data): 1.212
+2022-05-25 12:47:16,691 INFO: epoch:241, iter:540900, lr: 0.000008 loss: 0.012694  eta: 21:01:06, time (data): 1.205
+2022-05-25 12:49:17,348 INFO: epoch:241, iter:541000, lr: 0.000008 loss: 0.007346  eta: 20:58:52, time (data): 1.205
+2022-05-25 12:51:17,996 INFO: epoch:241, iter:541100, lr: 0.000008 loss: 0.006861  eta: 20:56:38, time (data): 1.207
+2022-05-25 12:51:32,611 INFO: Saving models and training states on epoch 241.
+2022-05-25 12:51:41,083 INFO: Validation ValSet,		 # psnr: 34.3851
+2022-05-25 12:53:28,444 INFO: epoch:242, iter:541200, lr: 0.000008 loss: 0.010672  eta: 20:54:32, time (data): 1.197
+2022-05-25 12:55:28,997 INFO: epoch:242, iter:541300, lr: 0.000008 loss: 0.014984  eta: 20:52:18, time (data): 1.209
+2022-05-25 12:57:29,651 INFO: epoch:242, iter:541400, lr: 0.000008 loss: 0.008736  eta: 20:50:04, time (data): 1.206
+2022-05-25 12:59:30,392 INFO: epoch:242, iter:541500, lr: 0.000008 loss: 0.044036  eta: 20:47:50, time (data): 1.207
+2022-05-25 13:01:31,300 INFO: epoch:242, iter:541600, lr: 0.000008 loss: 0.018474  eta: 20:45:36, time (data): 1.208
+2022-05-25 13:03:32,146 INFO: epoch:242, iter:541700, lr: 0.000008 loss: 0.014184  eta: 20:43:23, time (data): 1.213
+2022-05-25 13:05:32,806 INFO: epoch:242, iter:541800, lr: 0.000008 loss: 0.026754  eta: 20:41:09, time (data): 1.209
+2022-05-25 13:07:33,460 INFO: epoch:242, iter:541900, lr: 0.000008 loss: 0.001979  eta: 20:38:55, time (data): 1.206
+2022-05-25 13:09:34,066 INFO: epoch:242, iter:542000, lr: 0.000008 loss: 0.011098  eta: 20:36:41, time (data): 1.206
+2022-05-25 13:11:34,688 INFO: epoch:242, iter:542100, lr: 0.000008 loss: 0.013442  eta: 20:34:27, time (data): 1.207
+2022-05-25 13:13:35,369 INFO: epoch:242, iter:542200, lr: 0.000008 loss: 0.003927  eta: 20:32:14, time (data): 1.204
+2022-05-25 13:15:36,065 INFO: epoch:242, iter:542300, lr: 0.000008 loss: 0.006268  eta: 20:30:00, time (data): 1.207
+2022-05-25 13:17:36,838 INFO: epoch:242, iter:542400, lr: 0.000008 loss: 0.014292  eta: 20:27:47, time (data): 1.205
+2022-05-25 13:19:37,625 INFO: epoch:242, iter:542500, lr: 0.000008 loss: 0.012196  eta: 20:25:33, time (data): 1.205
+2022-05-25 13:21:38,501 INFO: epoch:242, iter:542600, lr: 0.000008 loss: 0.025868  eta: 20:23:20, time (data): 1.200
+2022-05-25 13:23:39,102 INFO: epoch:242, iter:542700, lr: 0.000008 loss: 0.011669  eta: 20:21:06, time (data): 1.207
+2022-05-25 13:25:39,712 INFO: epoch:242, iter:542800, lr: 0.000008 loss: 0.020975  eta: 20:18:53, time (data): 1.198
+2022-05-25 13:27:39,989 INFO: epoch:242, iter:542900, lr: 0.000008 loss: 0.028610  eta: 20:16:39, time (data): 1.204
+2022-05-25 13:29:40,193 INFO: epoch:242, iter:543000, lr: 0.000008 loss: 0.007734  eta: 20:14:25, time (data): 1.201
+2022-05-25 13:31:40,723 INFO: epoch:242, iter:543100, lr: 0.000007 loss: 0.023616  eta: 20:12:12, time (data): 1.205
+2022-05-25 13:33:41,408 INFO: epoch:242, iter:543200, lr: 0.000007 loss: 0.020802  eta: 20:09:58, time (data): 1.205
+2022-05-25 13:35:41,996 INFO: epoch:242, iter:543300, lr: 0.000007 loss: 0.003507  eta: 20:07:45, time (data): 1.207
+2022-05-25 13:36:39,996 INFO: Saving models and training states on epoch 242.
+2022-05-25 13:36:48,689 INFO: Validation ValSet,		 # psnr: 34.3866
+2022-05-25 13:36:48,689 INFO: Saving best models and training states on epoch 242.
+2022-05-25 13:37:55,003 INFO: epoch:243, iter:543400, lr: 0.000007 loss: 0.010779  eta: 20:05:41, time (data): 1.210
+2022-05-25 13:39:55,881 INFO: epoch:243, iter:543500, lr: 0.000007 loss: 0.006322  eta: 20:03:28, time (data): 1.205
+2022-05-25 13:41:57,212 INFO: epoch:243, iter:543600, lr: 0.000007 loss: 0.007169  eta: 20:01:15, time (data): 1.205
+2022-05-25 13:43:57,970 INFO: epoch:243, iter:543700, lr: 0.000007 loss: 0.006067  eta: 19:59:02, time (data): 1.208
+2022-05-25 13:45:58,877 INFO: epoch:243, iter:543800, lr: 0.000007 loss: 0.006624  eta: 19:56:49, time (data): 1.204
+2022-05-25 13:47:59,577 INFO: epoch:243, iter:543900, lr: 0.000007 loss: 0.000897  eta: 19:54:36, time (data): 1.202
+2022-05-25 13:50:00,139 INFO: epoch:243, iter:544000, lr: 0.000007 loss: 0.011581  eta: 19:52:23, time (data): 1.204
+2022-05-25 13:52:00,897 INFO: epoch:243, iter:544100, lr: 0.000007 loss: 0.005316  eta: 19:50:10, time (data): 1.202
+2022-05-25 13:54:01,386 INFO: epoch:243, iter:544200, lr: 0.000007 loss: 0.052895  eta: 19:47:57, time (data): 1.201
+2022-05-25 13:56:01,660 INFO: epoch:243, iter:544300, lr: 0.000007 loss: 0.040767  eta: 19:45:43, time (data): 1.200
+2022-05-25 13:58:01,942 INFO: epoch:243, iter:544400, lr: 0.000007 loss: 0.021307  eta: 19:43:30, time (data): 1.202
+2022-05-25 14:00:02,409 INFO: epoch:243, iter:544500, lr: 0.000007 loss: 0.007631  eta: 19:41:17, time (data): 1.206
+2022-05-25 14:02:03,054 INFO: epoch:243, iter:544600, lr: 0.000007 loss: 0.028997  eta: 19:39:04, time (data): 1.207
+2022-05-25 14:04:03,637 INFO: epoch:243, iter:544700, lr: 0.000007 loss: 0.010315  eta: 19:36:51, time (data): 1.205
+2022-05-25 14:06:04,347 INFO: epoch:243, iter:544800, lr: 0.000007 loss: 0.038090  eta: 19:34:38, time (data): 1.204
+2022-05-25 14:08:04,882 INFO: epoch:243, iter:544900, lr: 0.000007 loss: 0.005725  eta: 19:32:25, time (data): 1.200
+2022-05-25 14:10:05,327 INFO: epoch:243, iter:545000, lr: 0.000007 loss: 0.013545  eta: 19:30:12, time (data): 1.204
+2022-05-25 14:12:05,791 INFO: epoch:243, iter:545100, lr: 0.000007 loss: 0.027338  eta: 19:27:59, time (data): 1.204
+2022-05-25 14:14:06,219 INFO: epoch:243, iter:545200, lr: 0.000007 loss: 0.008994  eta: 19:25:47, time (data): 1.206
+2022-05-25 14:16:06,783 INFO: epoch:243, iter:545300, lr: 0.000007 loss: 0.006253  eta: 19:23:34, time (data): 1.209
+2022-05-25 14:18:07,331 INFO: epoch:243, iter:545400, lr: 0.000007 loss: 0.027717  eta: 19:21:21, time (data): 1.206
+2022-05-25 14:20:07,977 INFO: epoch:243, iter:545500, lr: 0.000007 loss: 0.005852  eta: 19:19:08, time (data): 1.210
+2022-05-25 14:21:49,505 INFO: Saving models and training states on epoch 243.
+2022-05-25 14:21:57,883 INFO: Validation ValSet,		 # psnr: 34.3864
+2022-05-25 14:22:18,416 INFO: epoch:244, iter:545600, lr: 0.000007 loss: 0.012471  eta: 19:17:03, time (data): 1.223
+2022-05-25 14:24:19,176 INFO: epoch:244, iter:545700, lr: 0.000007 loss: 0.018419  eta: 19:14:50, time (data): 1.205
+2022-05-25 14:26:19,710 INFO: epoch:244, iter:545800, lr: 0.000007 loss: 0.031625  eta: 19:12:38, time (data): 1.202
+2022-05-25 14:28:20,328 INFO: epoch:244, iter:545900, lr: 0.000007 loss: 0.007015  eta: 19:10:25, time (data): 1.205
+2022-05-25 14:30:20,851 INFO: epoch:244, iter:546000, lr: 0.000007 loss: 0.011760  eta: 19:08:13, time (data): 1.206
+2022-05-25 14:32:21,436 INFO: epoch:244, iter:546100, lr: 0.000007 loss: 0.010375  eta: 19:06:00, time (data): 1.209
+2022-05-25 14:34:21,962 INFO: epoch:244, iter:546200, lr: 0.000007 loss: 0.007879  eta: 19:03:48, time (data): 1.203
+2022-05-25 14:36:22,631 INFO: epoch:244, iter:546300, lr: 0.000007 loss: 0.009216  eta: 19:01:35, time (data): 1.211
+2022-05-25 14:38:23,350 INFO: epoch:244, iter:546400, lr: 0.000007 loss: 0.011636  eta: 18:59:23, time (data): 1.204
+2022-05-25 14:40:24,062 INFO: epoch:244, iter:546500, lr: 0.000007 loss: 0.007542  eta: 18:57:11, time (data): 1.202
+2022-05-25 14:42:24,610 INFO: epoch:244, iter:546600, lr: 0.000007 loss: 0.004216  eta: 18:54:58, time (data): 1.208
+2022-05-25 14:44:25,281 INFO: epoch:244, iter:546700, lr: 0.000007 loss: 0.017925  eta: 18:52:46, time (data): 1.204
+2022-05-25 14:46:26,037 INFO: epoch:244, iter:546800, lr: 0.000007 loss: 0.003428  eta: 18:50:34, time (data): 1.207
+2022-05-25 14:48:26,751 INFO: epoch:244, iter:546900, lr: 0.000007 loss: 0.016327  eta: 18:48:22, time (data): 1.202
+2022-05-25 14:50:27,435 INFO: epoch:244, iter:547000, lr: 0.000007 loss: 0.003171  eta: 18:46:09, time (data): 1.207
+2022-05-25 14:52:28,131 INFO: epoch:244, iter:547100, lr: 0.000007 loss: 0.005919  eta: 18:43:57, time (data): 1.207
+2022-05-25 14:54:28,800 INFO: epoch:244, iter:547200, lr: 0.000007 loss: 0.009818  eta: 18:41:45, time (data): 1.203
+2022-05-25 14:56:29,510 INFO: epoch:244, iter:547300, lr: 0.000007 loss: 0.006853  eta: 18:39:33, time (data): 1.208
+2022-05-25 14:58:30,138 INFO: epoch:244, iter:547400, lr: 0.000007 loss: 0.016842  eta: 18:37:21, time (data): 1.207
+2022-05-25 15:00:30,816 INFO: epoch:244, iter:547500, lr: 0.000007 loss: 0.012604  eta: 18:35:09, time (data): 1.205
+2022-05-25 15:02:31,561 INFO: epoch:244, iter:547600, lr: 0.000007 loss: 0.018373  eta: 18:32:57, time (data): 1.207
+2022-05-25 15:04:32,314 INFO: epoch:244, iter:547700, lr: 0.000006 loss: 0.022307  eta: 18:30:45, time (data): 1.206
+2022-05-25 15:06:32,938 INFO: epoch:244, iter:547800, lr: 0.000006 loss: 0.042303  eta: 18:28:33, time (data): 1.204
+2022-05-25 15:06:57,340 INFO: Saving models and training states on epoch 244.
+2022-05-25 15:07:05,936 INFO: Validation ValSet,		 # psnr: 34.3857
+2022-05-25 15:08:43,357 INFO: epoch:245, iter:547900, lr: 0.000006 loss: 0.006944  eta: 18:26:28, time (data): 1.207
+2022-05-25 15:10:44,070 INFO: epoch:245, iter:548000, lr: 0.000006 loss: 0.042914  eta: 18:24:16, time (data): 1.209
+2022-05-25 15:12:44,633 INFO: epoch:245, iter:548100, lr: 0.000006 loss: 0.021969  eta: 18:22:04, time (data): 1.223
+2022-05-25 15:14:45,237 INFO: epoch:245, iter:548200, lr: 0.000006 loss: 0.018337  eta: 18:19:52, time (data): 1.208
+2022-05-25 15:16:45,855 INFO: epoch:245, iter:548300, lr: 0.000006 loss: 0.010185  eta: 18:17:40, time (data): 1.205
+2022-05-25 15:18:46,586 INFO: epoch:245, iter:548400, lr: 0.000006 loss: 0.025157  eta: 18:15:28, time (data): 1.208
+2022-05-25 15:20:47,331 INFO: epoch:245, iter:548500, lr: 0.000006 loss: 0.000647  eta: 18:13:17, time (data): 1.208
+2022-05-25 15:22:47,939 INFO: epoch:245, iter:548600, lr: 0.000006 loss: 0.005919  eta: 18:11:05, time (data): 1.205
+2022-05-25 15:24:48,403 INFO: epoch:245, iter:548700, lr: 0.000006 loss: 0.018389  eta: 18:08:53, time (data): 1.208
+2022-05-25 15:26:49,008 INFO: epoch:245, iter:548800, lr: 0.000006 loss: 0.009884  eta: 18:06:41, time (data): 1.207
+2022-05-25 15:28:49,578 INFO: epoch:245, iter:548900, lr: 0.000006 loss: 0.028863  eta: 18:04:30, time (data): 1.209
+2022-05-25 15:30:50,212 INFO: epoch:245, iter:549000, lr: 0.000006 loss: 0.013027  eta: 18:02:18, time (data): 1.209
+2022-05-25 15:32:50,998 INFO: epoch:245, iter:549100, lr: 0.000006 loss: 0.002762  eta: 18:00:06, time (data): 1.208
+2022-05-25 15:34:51,866 INFO: epoch:245, iter:549200, lr: 0.000006 loss: 0.000783  eta: 17:57:55, time (data): 1.208
+2022-05-25 15:36:52,605 INFO: epoch:245, iter:549300, lr: 0.000006 loss: 0.020686  eta: 17:55:43, time (data): 1.207
+2022-05-25 15:38:53,459 INFO: epoch:245, iter:549400, lr: 0.000006 loss: 0.020473  eta: 17:53:32, time (data): 1.224
+2022-05-25 15:40:54,172 INFO: epoch:245, iter:549500, lr: 0.000006 loss: 0.003852  eta: 17:51:21, time (data): 1.206
+2022-05-25 15:42:54,740 INFO: epoch:245, iter:549600, lr: 0.000006 loss: 0.006376  eta: 17:49:09, time (data): 1.199
+2022-05-25 15:44:55,297 INFO: epoch:245, iter:549700, lr: 0.000006 loss: 0.014536  eta: 17:46:58, time (data): 1.204
+2022-05-25 15:46:55,900 INFO: epoch:245, iter:549800, lr: 0.000006 loss: 0.010721  eta: 17:44:46, time (data): 1.206
+2022-05-25 15:48:56,481 INFO: epoch:245, iter:549900, lr: 0.000006 loss: 0.008957  eta: 17:42:35, time (data): 1.209
+2022-05-25 15:50:56,874 INFO: epoch:245, iter:550000, lr: 0.000006 loss: 0.044148  eta: 17:40:23, time (data): 1.204
+2022-05-25 15:52:04,475 INFO: Saving models and training states on epoch 245.
+2022-05-25 15:52:13,043 INFO: Validation ValSet,		 # psnr: 34.3855
+2022-05-25 15:53:07,050 INFO: epoch:246, iter:550100, lr: 0.000006 loss: 0.012093  eta: 17:38:18, time (data): 1.203
+2022-05-25 15:55:07,669 INFO: epoch:246, iter:550200, lr: 0.000006 loss: 0.011629  eta: 17:36:06, time (data): 1.201
+2022-05-25 15:57:08,286 INFO: epoch:246, iter:550300, lr: 0.000006 loss: 0.016716  eta: 17:33:55, time (data): 1.207
+2022-05-25 15:59:09,029 INFO: epoch:246, iter:550400, lr: 0.000006 loss: 0.003446  eta: 17:31:44, time (data): 1.201
+2022-05-25 16:01:09,642 INFO: epoch:246, iter:550500, lr: 0.000006 loss: 0.028369  eta: 17:29:33, time (data): 1.202
+2022-05-25 16:03:10,403 INFO: epoch:246, iter:550600, lr: 0.000006 loss: 0.007523  eta: 17:27:21, time (data): 1.207
+2022-05-25 16:05:11,051 INFO: epoch:246, iter:550700, lr: 0.000006 loss: 0.020624  eta: 17:25:10, time (data): 1.208
+2022-05-25 16:07:11,866 INFO: epoch:246, iter:550800, lr: 0.000006 loss: 0.009644  eta: 17:22:59, time (data): 1.213
+2022-05-25 16:09:12,507 INFO: epoch:246, iter:550900, lr: 0.000006 loss: 0.017081  eta: 17:20:48, time (data): 1.207
+2022-05-25 16:11:13,178 INFO: epoch:246, iter:551000, lr: 0.000006 loss: 0.044945  eta: 17:18:37, time (data): 1.212
+2022-05-25 16:13:13,882 INFO: epoch:246, iter:551100, lr: 0.000006 loss: 0.000562  eta: 17:16:26, time (data): 1.204
+2022-05-25 16:15:14,677 INFO: epoch:246, iter:551200, lr: 0.000006 loss: 0.003587  eta: 17:14:15, time (data): 1.208
+2022-05-25 16:17:15,349 INFO: epoch:246, iter:551300, lr: 0.000006 loss: 0.015728  eta: 17:12:04, time (data): 1.204
+2022-05-25 16:19:16,098 INFO: epoch:246, iter:551400, lr: 0.000006 loss: 0.015885  eta: 17:09:53, time (data): 1.206
+2022-05-25 16:21:16,793 INFO: epoch:246, iter:551500, lr: 0.000006 loss: 0.030604  eta: 17:07:42, time (data): 1.203
+2022-05-25 16:23:17,390 INFO: epoch:246, iter:551600, lr: 0.000006 loss: 0.015870  eta: 17:05:31, time (data): 1.206
+2022-05-25 16:25:18,011 INFO: epoch:246, iter:551700, lr: 0.000006 loss: 0.013510  eta: 17:03:20, time (data): 1.204
+2022-05-25 16:27:18,887 INFO: epoch:246, iter:551800, lr: 0.000006 loss: 0.010314  eta: 17:01:09, time (data): 1.226
+2022-05-25 16:29:19,523 INFO: epoch:246, iter:551900, lr: 0.000006 loss: 0.022837  eta: 16:58:58, time (data): 1.201
+2022-05-25 16:31:20,020 INFO: epoch:246, iter:552000, lr: 0.000006 loss: 0.016124  eta: 16:56:47, time (data): 1.205
+2022-05-25 16:31:20,023 INFO: 
+ Updating Patch_Size to 384 and Batch_Size to 1 
+
