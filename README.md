@@ -45,11 +45,11 @@ scikit-image == 0.19.2
 训练至少需要4卡资源，配置默认为4卡，如需8卡训练可修改configs/GaussianColorDenoising_Restormer.yml文件。将其中跟iters相关的数值除以2，同时将学习率相关数值乘以2.
 多卡训练，启动方式如下：
 ```shell
-python -u -m paddle.distributed.launch / train.py -opt configs/GaussianColorDenoising_Restormer.yml 
+python -u -m paddle.distributed.launch  train.py -opt configs/GaussianColorDenoising_Restormer.yml 
 ```
 多卡恢复训练，启动方式如下：
 ```shell
-python -u -m paddle.distributed.launch / train.py -opt configs/GaussianColorDenoising_Restormer.yml --resume ../245_model
+python -u -m paddle.distributed.launch  train.py -opt configs/GaussianColorDenoising_Restormer.yml --resume ../245_model
 ```
 
 参数介绍：
