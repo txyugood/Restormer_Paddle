@@ -93,9 +93,9 @@ for sigma_test in sigmas:
             restored = paddle.clip(restored, 0, 1).detach()
             restored = paddle.transpose(restored, [0, 2, 3, 1]).squeeze(0).numpy()
 
-            img = paddle.transpose(img, [1, 2, 0]).numpy()
-            save_file = os.path.join(result_dir_tmp, "noise_" + os.path.split(file_)[-1])
-            save_img(save_file, img_as_ubyte(img))
-
             save_file = os.path.join(result_dir_tmp, "denoise_" + os.path.split(file_)[-1])
             save_img(save_file, img_as_ubyte(restored))
+
+            img = paddle.transpose(img, [1, 2, 0]).clip(0, 1).numpy()
+            save_file = os.path.join(result_dir_tmp, "noise_" + os.path.split(file_)[-1])
+            save_img(save_file, img_as_ubyte(img))

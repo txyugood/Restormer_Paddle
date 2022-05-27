@@ -14,8 +14,6 @@ from utils.utils import load_pretrained_model
 
 parser = argparse.ArgumentParser(description='Gaussian Color Denoising using Restormer')
 
-parser.add_argument('--input_dir', default='/Users/alex/Downloads/Datasets/test/', type=str,
-                    help='Directory of validation images')
 parser.add_argument('--result_dir', default='./results/Gaussian_Color_Denoising/', type=str,
                     help='Directory for results')
 parser.add_argument('--weights', default='/Users/alex/Desktop/restormer.pdparams', type=str, help='Path to weights')
@@ -44,16 +42,10 @@ s = x['network_g'].pop('type')
 
 sigmas = np.int_(args.sigmas.split(','))
 
-factor = 8
-
-datasets = ['CBSD68']
-
 for sigma_test in sigmas:
     print("Compute results for noise level", sigma_test)
-    # model_restoration = Restormer(**x['network_g'])
     x['is_train'] = False
     model = ImageCleanModel(x)
-
 
     load_pretrained_model(model.net_g, args.weights)
     print("===>Testing using weights: ", args.weights)
@@ -67,7 +59,8 @@ for sigma_test in sigmas:
     val_loader = DataLoader(dataset=val_set,
                             batch_sampler=batch_sampler,
                             num_workers=0)
-    model.validation(val_loader, 0,
+    current_metric = model.validation(val_loader, 0,
                                  False,
                                  rgb2bgr=True,
                                  use_image=False)
+    print(f"[Eval] PSNR: {current_metric}")
