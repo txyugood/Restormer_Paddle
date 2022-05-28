@@ -62,9 +62,10 @@ resume: 从哪个模型开始恢复训练，需要pdparams和pdopt文件。
 ### 模型验证
 
 除了可以再训练过程中验证模型精度，还可以是val.py脚本加载模型验证精度，执行以下命令。
+验证数据的地址需要设置configs/GaussianColorDenoising_Restormer.yml中的datasets.val.dataroot_gt参数。
 
 ```shell
-python val.py --weights best_model.pdparams --model_type blind --sigmas 15 
+python val.py -opt configs/GaussianColorDenoising_Restormer.yml --weights best_model.pdparams --sigmas 15 
 ```
 
 输出如下：
@@ -80,6 +81,14 @@ There are 406/406 variables loaded into Restormer.
 ------------------------------------------------
 [Eval] PSNR: 34.39220432429305
 ```
+
+参数说明：
+
+opt: 配置路径
+
+weights: 模型权重地址
+
+sigmas: 噪声等级
 
 ### 单张图片预测
 本项目提供了单张图片的预测脚本，可根据输入图片生成噪声，然后对图片进行降噪。会在result_dir指定的目录下生成denoise_0000.png和noise_0000.png两张图片。使用方法如下：

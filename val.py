@@ -14,20 +14,16 @@ from utils.utils import load_pretrained_model
 
 parser = argparse.ArgumentParser(description='Gaussian Color Denoising using Restormer')
 
+parser.add_argument(
+    '-opt', type=str, default='configs/GaussianColorDenoising_Restormer.yml', required=True, help='Path to option YAML file.')
 parser.add_argument('--result_dir', default='./results/Gaussian_Color_Denoising/', type=str,
                     help='Directory for results')
 parser.add_argument('--weights', default='/Users/alex/Desktop/restormer.pdparams', type=str, help='Path to weights')
-parser.add_argument('--model_type', required=True, choices=['non_blind', 'blind'], type=str,
-                    help='blind: single model to handle various noise levels. non_blind: separate model for each noise level.')
 parser.add_argument('--sigmas', default='15,25,50', type=str, help='Sigma values')
 
 args = parser.parse_args()
 
-####### Load yaml #######
-if args.model_type == 'blind':
-    yaml_file = 'configs/GaussianColorDenoising_Restormer.yml'
-else:
-    yaml_file = f'configs/GaussianColorDenoising_RestormerSigma{args.sigmas}.yml'
+yaml_file = args.opt
 import yaml
 
 try:
