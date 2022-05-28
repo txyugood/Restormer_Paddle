@@ -99,3 +99,4 @@ for sigma_test in sigmas:
             img = paddle.transpose(img, [1, 2, 0]).clip(0, 1).numpy()
             save_file = os.path.join(result_dir_tmp, "noise_" + os.path.split(file_)[-1])
             save_img(save_file, img_as_ubyte(img))
+    print(f"The predict image save in {result_dir_tmp} path.")

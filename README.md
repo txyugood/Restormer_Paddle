@@ -64,7 +64,7 @@ resume: 从哪个模型开始恢复训练，需要pdparams和pdopt文件。
 除了可以再训练过程中验证模型精度，还可以是val.py脚本加载模型验证精度，执行以下命令。
 
 ```shell
-python val.py --input_dir ../data/Datasets/test/ --weights best_model.pdparams --model_type blind --sigmas 15 
+python val.py --weights best_model.pdparams --model_type blind --sigmas 15 
 ```
 
 输出如下：
@@ -84,7 +84,7 @@ There are 406/406 variables loaded into Restormer.
 ### 单张图片预测
 本项目提供了单张图片的预测脚本，可根据输入图片生成噪声，然后对图片进行降噪。会在result_dir指定的目录下生成denoise_0000.png和noise_0000.png两张图片。使用方法如下：
 ```shell
-python predict.py --input_images ../data/CBSD68/0000.png \
+python predict.py --input_images demo/0000.png \
 --weights best_model.pdparams \
 --model_type blind --sigmas 15 --result_dir ./output/
 ```
@@ -105,7 +105,7 @@ sigmas: 噪声等级。
 在噪声等级15下的预测样例:
 
 
- <center>
+ <div align="center">
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
     src=demo/0002.png width = "30%" alt=""/>
@@ -122,9 +122,9 @@ sigmas: 噪声等级。
     padding: 2px;">
       从左到右分别是clear、nosie、denoise
   	</div>
-</center>
+</div>
 
-<center>
+<div align="center">
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
     src=demo/0000.png width = "30%" alt=""/>
@@ -141,7 +141,7 @@ sigmas: 噪声等级。
     padding: 2px;">
       从左到右分别是clear、nosie、denoise
   	</div>
-</center>
+</div>
 
 
 
